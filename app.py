@@ -3,14 +3,16 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# Title and description
+# Title
 st.title("Rent Growth Forecast Comparison")
+
 st.markdown("""
-This dashboard compares **Rent Growth Forecasts** across three economic scenarios:
-**Base**, **High**, and **Low** for:
+This dashboard allows you to compare **Rent Growth Forecasts** across different economic scenarios:
 
 - Core Plus – Res
 - Core Plus – Ind
+
+Choose a scenario below to filter the data.
 """)
 
 # Load scenario data
@@ -20,9 +22,9 @@ def load_data():
     high = pd.read_excel("HighScenario.xlsx")
     low = pd.read_excel("LowScenario.xlsx")
 
-    col_range = list(range(13, 19))  # Excel columns N to S (0-indexed)
+    col_range = list(range(13, 19))  # Columns N to S
     row_labels = ['Core Plus - Res', 'Core Plus - Ind']
-    row_indices = [4, 5]  # Rows 5 and 6 (0-indexed)
+    row_indices = [4, 5]
 
     def extract(df, scenario):
         temp = df.iloc[row_indices, col_range]
@@ -38,17 +40,28 @@ def load_data():
         extract(low, 'Low')
     ])
 
+# Load data
 df = load_data()
+
+# User input
+scenario_choice = st.selectbox(
+    "Select a scenario to display:",
+    options=["All", "Base", "High", "Low"]
+)
+
+# Filter data
+if scenario_choice != "All":
+    df = df[df["Scenario"] == scenario_choice]
 
 # Plot
 fig = px.bar(
     df,
     x="Period",
     y="Rent Growth",
-    color="Scenario",
+    color="Scenario" if scenario_choice == "All" else None,
     barmode="group",
     facet_row="index",
-    title="Rent Growth Forecasts Across Scenarios"
+    title=f"Rent Growth Forecasts - {scenario_choice} Scenario" if scenario_choice != "All" else "Rent Growth Forecasts - All Scenarios"
 )
 
 fig.update_layout(height=600)
