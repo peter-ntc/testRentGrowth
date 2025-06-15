@@ -7,12 +7,10 @@ import plotly.express as px
 st.title("Rent Growth Forecast Comparison")
 
 st.markdown("""
-This dashboard allows you to compare **Rent Growth Forecasts** across different economic scenarios:
+This dashboard lets you explore **Rent Growth Forecasts** across up to 3 sectors and compare across scenarios:
 
-- Core Plus – Res
-- Core Plus – Ind
-
-Choose a scenario below to filter the data.
+- Select 1–3 sectors from the list
+- Choose a scenario to view (or All)
 """)
 
 # Load scenario data
@@ -23,14 +21,16 @@ def load_data():
     low = pd.read_excel("LowScenario.xlsx")
 
     col_range = list(range(13, 19))  # Columns N to S
-    row_labels = ['Core Plus - Res', 'Core Plus - Ind']
-    row_indices = [4, 5]
+    all_rows = base.iloc[:, 2].dropna().reset_index(drop=True)  # All profile names in column C
 
     def extract(df, scenario):
-        temp = df.iloc[row_indices, col_range]
-        temp.index = row_labels
+        temp = df.iloc[:, col_range]
+        temp['Profile'] = df.iloc[:, 2]
+        temp = temp.dropna(subset=['Profile'])
+        temp = temp.reset_index(drop=True)
+        temp = temp.set_index('Profile')
         temp.columns = [f"Period {i+1}" for i in range(temp.shape[1])]
-        melted = temp.reset_index().melt(id_vars='index', var_name='Period', value_name='Rent Growth')
+        melted = temp.reset_index().melt(id_vars='Profile', var_name='Period', value_name='Rent Growth')
         melted['Scenario'] = scenario
         return melted
 
@@ -38,30 +38,41 @@ def load_data():
         extract(base, 'Base'),
         extract(high, 'High'),
         extract(low, 'Low')
-    ])
+    ]), all_rows.tolist()
 
 # Load data
-df = load_data()
+df, all_profiles = load_data()
 
-# User input
+# Sector selection
+selected_sectors = st.multiselect(
+    "Select up to 3 sectors:",
+    options=all_profiles,
+    default=all_profiles[:2],
+    max_selections=3
+)
+
+# Scenario selection
 scenario_choice = st.selectbox(
     "Select a scenario to display:",
     options=["All", "Base", "High", "Low"]
 )
 
-# Filter data
+# Filter by sectors
+filtered_df = df[df["Profile"].isin(selected_sectors)]
+
+# Filter by scenario
 if scenario_choice != "All":
-    df = df[df["Scenario"] == scenario_choice]
+    filtered_df = filtered_df[filtered_df["Scenario"] == scenario_choice]
 
 # Plot
 fig = px.bar(
-    df,
+    filtered_df,
     x="Period",
     y="Rent Growth",
     color="Scenario" if scenario_choice == "All" else None,
     barmode="group",
-    facet_row="index",
-    title=f"Rent Growth Forecasts - {scenario_choice} Scenario" if scenario_choice != "All" else "Rent Growth Forecasts - All Scenarios"
+    facet_row="Profile",
+    title=f"Rent Growth Forecast - {scenario_choice} Scenario" if scenario_choice != "All" else "Rent Growth Forecast - All Scenarios"
 )
 
 fig.update_layout(height=600)
