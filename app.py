@@ -6,10 +6,8 @@ import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 
-# --- Page config ---
 st.set_page_config(layout="centered", page_title="TownsendAI Forecasting Tool")
 
-# --- Logo as clickable link ---
 def render_clickable_logo(image_path, url, width=120):
     img = Image.open(image_path)
     buffered = BytesIO()
@@ -26,11 +24,9 @@ def render_clickable_logo(image_path, url, width=120):
 
 render_clickable_logo("townsendAI_logo 1.png", "https://townsendgroup.com")
 
-# --- Title and description ---
 st.title("🏢 TownsendAI Forecasting Tool")
 st.markdown("Powered by 40+ years of proprietary real estate data and forecasting models.")
 
-# --- Scenario Excel files ---
 excel_files = {
     "Base": "BaseScenario.xlsx",
     "High": "HighScenario.xlsx",
@@ -55,70 +51,96 @@ def extract_data(scenario, sectors, data_type):
                 idx = sector_names.index(sector) + 2
                 if data_type == "Rent Growth":
                     values = df.loc[idx, 13:18].values.tolist()
+                    cols = ["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6"]
                 elif data_type == "Return Forecast":
-                    values = [
-                        df.loc[idx, 22],
-                        df.loc[idx, 31]
-                    ]
-                all_data.setdefault(sector, {})[scen] = values
+                    values = [df.loc[idx, 22], df.loc[idx, 31]]
+                    cols = ["Unlevered", "Levered"]
+                all_data.setdefault(sector, {})[scen] = dict(zip(cols, values))
             except ValueError:
                 continue
     return all_data
+
+def convert_to_excel(data_dict):
+    records = []
+    for sector, scenario_values in data_dict.items():
+        for scen, value_dict in scenario_values.items():
+            row = {"Sector": sector, "Scenario": scen}
+            row.update(value_dict)
+            records.append(row)
+    df = pd.DataFrame(records)
+    output = BytesIO()
+    df.to_excel(output, index=False, engine='openpyxl')
+    return output.getvalue()
 
 # --- Session state setup ---
 if "last_forecast_type" not in st.session_state:
     st.session_state.last_forecast_type = ""
 
-# --- UI selections ---
 forecast_type = st.selectbox("Select Forecast Type", ["", "Rent Growth", "Return Forecast"], key="forecast_type")
 
-# Reset scenario and sector selections if forecast type changed
+# Reset visible UI if type changed
 if forecast_type != st.session_state.last_forecast_type:
     st.session_state.last_forecast_type = forecast_type
-    st.session_state.pop("scenario", None)
-    st.session_state.pop("sectors", None)
+    st.session_state["scenario"] = ""
+    st.session_state["sectors"] = []
 
-if forecast_type:
-    scenario = st.selectbox("Select Scenario", ["", "Base", "High", "Low", "All"], key="scenario")
-    sectors = st.multiselect("Select up to 3 sectors:", get_sectors(), max_selections=3, key="sectors")
+scenario = st.selectbox(
+    "Select Scenario", ["", "Base", "High", "Low", "All"],
+    key="scenario"
+)
 
-    if scenario and sectors:
-        data = extract_data(scenario, sectors, forecast_type)
+sectors = st.multiselect(
+    "Select up to 3 sectors:",
+    get_sectors(),
+    default=st.session_state.get("sectors", []),
+    key="sectors",
+    max_selections=3
+)
 
-        if forecast_type == "Rent Growth":
-            st.subheader("📊 Rent Growth Forecasts")
-            years = ["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6"]
-            for sector, scenario_values in data.items():
-                fig, ax = plt.subplots()
-                bar_width = 0.2
-                x = list(range(len(years)))
+if forecast_type and scenario and sectors:
+    data = extract_data(scenario, sectors, forecast_type)
 
-                for i, (scen, values) in enumerate(scenario_values.items()):
-                    offset = [xi + (i - 1) * bar_width for xi in x]
-                    ax.bar(offset, values, width=bar_width, label=scen)
+    if forecast_type == "Rent Growth":
+        st.subheader("📊 Rent Growth Forecasts")
+        years = ["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6"]
+        for sector, scenario_values in data.items():
+            fig, ax = plt.subplots()
+            bar_width = 0.2
+            x = list(range(len(years)))
 
-                ax.set_xticks(x)
-                ax.set_xticklabels(years)
-                ax.set_title(f"{sector} - Rent Growth")
-                ax.set_ylabel("% Growth")
-                ax.legend()
-                st.pyplot(fig)
+            for i, (scen, values) in enumerate(scenario_values.items()):
+                offset = [xi + (i - 1) * bar_width for xi in x]
+                ax.bar(offset, list(values.values()), width=bar_width, label=scen)
 
-        elif forecast_type == "Return Forecast":
-            st.subheader("📊 6-Year Returns (Unlevered and Levered)")
-            for sector, scenario_values in data.items():
-                fig, ax = plt.subplots()
-                width = 0.35
-                x = list(range(len(scenario_values)))
-                scenarios = list(scenario_values.keys())
-                unlevered = [scenario_values[scen][0] for scen in scenarios]
-                levered = [scenario_values[scen][1] for scen in scenarios]
+            ax.set_xticks(x)
+            ax.set_xticklabels(years)
+            ax.set_title(f"{sector} - Rent Growth")
+            ax.set_ylabel("% Growth")
+            ax.legend()
+            st.pyplot(fig)
 
-                ax.bar([i - width/2 for i in x], unlevered, width=width, label="Unlevered")
-                ax.bar([i + width/2 for i in x], levered, width=width, label="Levered")
-                ax.set_xticks(x)
-                ax.set_xticklabels(scenarios)
-                ax.set_title(f"{sector} - Return Forecast")
-                ax.set_ylabel("% Return")
-                ax.legend()
-                st.pyplot(fig)
+    elif forecast_type == "Return Forecast":
+        st.subheader("📊 6-Year Returns (Unlevered and Levered)")
+        for sector, scenario_values in data.items():
+            fig, ax = plt.subplots()
+            width = 0.35
+            x = list(range(len(scenario_values)))
+            scenarios = list(scenario_values.keys())
+            unlevered = [scenario_values[scen]["Unlevered"] for scen in scenarios]
+            levered = [scenario_values[scen]["Levered"] for scen in scenarios]
+
+            ax.bar([i - width/2 for i in x], unlevered, width=width, label="Unlevered")
+            ax.bar([i + width/2 for i in x], levered, width=width, label="Levered")
+            ax.set_xticks(x)
+            ax.set_xticklabels(scenarios)
+            ax.set_title(f"{sector} - Return Forecast")
+            ax.set_ylabel("% Return")
+            ax.legend()
+            st.pyplot(fig)
+
+    st.download_button(
+        label="📥 Download Excel",
+        data=convert_to_excel(data),
+        file_name=f"{forecast_type.replace(' ', '_')}_Forecast.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
