@@ -1,85 +1,118 @@
 
-import streamlit as st
+import base64
+from io import BytesIO
+from PIL import Image
 import pandas as pd
-import plotly.express as px
+import streamlit as st
+import matplotlib.pyplot as plt
 
-# Title
-st.title("Rent Growth Forecast Comparison")
+# --- Page config ---
+st.set_page_config(layout="centered", page_title="TownsendAI Forecasting Tool")
 
-st.markdown("""
-This dashboard lets you explore **Rent Growth Forecasts** across up to 3 sectors and compare across scenarios.
+# --- Logo as clickable link ---
+def render_clickable_logo(image_path, url, width=120):
+    img = Image.open(image_path)
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    html = f'''
+        <div style="text-align:center; margin-bottom: 1rem;">
+            <a href="{url}" target="_blank">
+                <img src="data:image/png;base64,{img_str}" width="{width}"/>
+            </a>
+        </div>
+    '''
+    st.markdown(html, unsafe_allow_html=True)
 
-- First, select up to 3 sectors
-- Then choose a scenario to display
-- The chart will appear once both are selected
-""")
+render_clickable_logo("townsendAI_logo 1.png", "https://townsendgroup.com")
 
-# Load scenario data
+# --- Title and description ---
+st.title("🏢 TownsendAI Forecasting Tool")
+st.markdown("Powered by 40+ years of proprietary real estate data and forecasting models.")
+
+# --- Scenario Excel files ---
+excel_files = {
+    "Base": "BaseScenario.xlsx",
+    "High": "HighScenario.xlsx",
+    "Low": "LowScenario.xlsx"
+}
+
 @st.cache_data
-def load_data():
-    base = pd.read_excel("BaseScenario.xlsx")
-    high = pd.read_excel("HighScenario.xlsx")
-    low = pd.read_excel("LowScenario.xlsx")
+def get_sectors():
+    df = pd.read_excel(excel_files["Base"], sheet_name=0, header=None)
+    return df.loc[2:20, 2].dropna().tolist()
 
-    col_range = list(range(13, 19))  # Columns N to S
-    all_rows = base.iloc[:, 2].dropna().reset_index(drop=True)  # All profile names in column C
+def extract_data(scenario, sectors, data_type):
+    all_data = {}
+    scenario_list = [scenario] if scenario != "All" else list(excel_files.keys())
 
-    def extract(df, scenario):
-        temp = df.iloc[:, col_range]
-        temp['Profile'] = df.iloc[:, 2]
-        temp = temp.dropna(subset=['Profile'])
-        temp = temp.reset_index(drop=True)
-        temp = temp.set_index('Profile')
-        temp.columns = [f"Period {i+1}" for i in range(temp.shape[1])]
-        melted = temp.reset_index().melt(id_vars='Profile', var_name='Period', value_name='Rent Growth')
-        melted['Scenario'] = scenario
-        return melted
+    for scen in scenario_list:
+        df = pd.read_excel(excel_files[scen], sheet_name=0, header=None)
+        sector_names = df.loc[2:20, 2].tolist()
 
-    return pd.concat([
-        extract(base, 'Base'),
-        extract(high, 'High'),
-        extract(low, 'Low')
-    ]), all_rows.tolist()
+        for sector in sectors:
+            try:
+                idx = sector_names.index(sector) + 2
+                if data_type == "Rent Growth":
+                    values = df.loc[idx, 13:18].values.tolist()
+                elif data_type == "Return Forecast":
+                    values = [
+                        df.loc[idx, 22],
+                        df.loc[idx, 31]
+                    ]
+                all_data.setdefault(sector, {})[scen] = values
+            except ValueError:
+                continue
+    return all_data
 
-# Load data
-df, all_profiles = load_data()
+# --- UI selections ---
+forecast_type = st.selectbox("Select Forecast Type", ["", "Rent Growth", "Return Forecast"])
 
-# Sector selection
-selected_sectors = st.multiselect(
-    "Select up to 3 sectors:",
-    options=all_profiles,
-    max_selections=3
-)
+if forecast_type:
+    scenario = st.selectbox("Select Scenario", ["", "Base", "High", "Low", "All"])
+    sectors = st.multiselect("Select up to 3 sectors:", get_sectors(), max_selections=3)
 
-# Scenario selection
-scenario_choice = st.selectbox(
-    "Select a scenario to display:",
-    options=["", "Base", "High", "Low", "All"],
-    index=0,
-    format_func=lambda x: "Select..." if x == "" else x
-)
+    if scenario and sectors:
+        data = extract_data(scenario, sectors, forecast_type)
 
-# Only proceed if both selections are made
-if selected_sectors and scenario_choice != "":
-    # Filter by sectors
-    filtered_df = df[df["Profile"].isin(selected_sectors)]
+        if forecast_type == "Rent Growth":
+            st.subheader("📊 Rent Growth Forecasts")
+            years = ["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6"]
+            for sector, scenario_values in data.items():
+                fig, ax = plt.subplots()
+                bar_width = 0.2
+                x = list(range(len(years)))
 
-    # Filter by scenario
-    if scenario_choice != "All":
-        filtered_df = filtered_df[filtered_df["Scenario"] == scenario_choice]
+                for i, (scen, values) in enumerate(scenario_values.items()):
+                    offset = [xi + (i - 1) * bar_width for xi in x]
+                    ax.bar(offset, values, width=bar_width, label=scen)
 
-    # Plot
-    fig = px.bar(
-        filtered_df,
-        x="Period",
-        y="Rent Growth",
-        color="Scenario" if scenario_choice == "All" else None,
-        barmode="group",
-        facet_row="Profile",
-        title=f"Rent Growth Forecast - {scenario_choice} Scenario" if scenario_choice != "All" else "Rent Growth Forecast - All Scenarios"
-    )
+                ax.set_xticks(x)
+                ax.set_xticklabels(years)
+                ax.set_title(f"{sector} - Rent Growth")
+                ax.set_ylabel("% Growth")
+                ax.legend()
+                st.pyplot(fig)
 
-    fig.update_layout(height=600)
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.info("Please select up to 3 sectors and choose a scenario to see the chart.")
+        elif forecast_type == "Return Forecast":
+            st.subheader("📊 6-Year Returns (Unlevered and Levered)")
+            for sector, scenario_values in data.items():
+                fig, ax = plt.subplots()
+                width = 0.35
+                x = list(range(len(scenario_values)))
+                scenarios = list(scenario_values.keys())
+                unlevered = [scenario_values[scen][0] for scen in scenarios]
+                levered = [scenario_values[scen][1] for scen in scenarios]
+
+                ax.bar([i - width/2 for i in x], unlevered, width=width, label="Unlevered")
+                ax.bar([i + width/2 for i in x], levered, width=width, label="Levered")
+                ax.set_xticks(x)
+                ax.set_xticklabels(scenarios)
+                ax.set_title(f"{sector} - Return Forecast")
+                ax.set_ylabel("% Return")
+                ax.legend()
+                st.pyplot(fig)
+
+    st.markdown("---")
+    if st.button("🔄 Back to Home"):
+        st.experimental_rerun()
