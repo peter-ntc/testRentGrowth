@@ -65,12 +65,22 @@ def extract_data(scenario, sectors, data_type):
                 continue
     return all_data
 
+# --- Session state setup ---
+if "last_forecast_type" not in st.session_state:
+    st.session_state.last_forecast_type = ""
+
 # --- UI selections ---
-forecast_type = st.selectbox("Select Forecast Type", ["", "Rent Growth", "Return Forecast"])
+forecast_type = st.selectbox("Select Forecast Type", ["", "Rent Growth", "Return Forecast"], key="forecast_type")
+
+# Reset scenario and sector selections if forecast type changed
+if forecast_type != st.session_state.last_forecast_type:
+    st.session_state.last_forecast_type = forecast_type
+    st.session_state.pop("scenario", None)
+    st.session_state.pop("sectors", None)
 
 if forecast_type:
-    scenario = st.selectbox("Select Scenario", ["", "Base", "High", "Low", "All"])
-    sectors = st.multiselect("Select up to 3 sectors:", get_sectors(), max_selections=3)
+    scenario = st.selectbox("Select Scenario", ["", "Base", "High", "Low", "All"], key="scenario")
+    sectors = st.multiselect("Select up to 3 sectors:", get_sectors(), max_selections=3, key="sectors")
 
     if scenario and sectors:
         data = extract_data(scenario, sectors, forecast_type)
@@ -112,7 +122,3 @@ if forecast_type:
                 ax.set_ylabel("% Return")
                 ax.legend()
                 st.pyplot(fig)
-
-    st.markdown("---")
-    if st.button("🔄 Back to Home"):
-        st.experimental_rerun()
