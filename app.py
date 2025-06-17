@@ -47,11 +47,29 @@ def home():
         if st.button("📰 Market Research"):
             st.session_state.page = "research"
 
+
 def coming_soon(section):
+    if st.button("🔙 Back to Home"):
+        st.session_state.page = "home"
+        return
+
+    show_back_button()
+
     st.title(section)
     st.info("🚧 This section is under construction. Stay tuned!")
 
+
+def show_back_button():
+    if st.button("🔙 Back to Home"):
+        st.session_state.page = "home"
+
 def forecasting_page():
+    if st.button("🔙 Back to Home"):
+        st.session_state.page = "home"
+        return
+
+    show_back_button()
+
     st.title("📈 Forecasting & Modeling")
 
     excel_files = {
