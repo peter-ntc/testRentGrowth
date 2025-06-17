@@ -143,11 +143,3 @@ if forecast_type and scenario and sectors:
 
     csv = df.to_csv(index=False).encode("utf-8")
     st.download_button("Download as CSV", data=csv, file_name="forecast.csv")
-
-    try:
-        import pdfkit
-        pdf_bytes = BytesIO()
-        df.to_html(buf=pdf_bytes)
-        st.download_button("Download as PDF", data=pdf_bytes.getvalue(), file_name="forecast.html")
-    except:
-        st.info("PDF export requires `pdfkit` and wkhtmltopdf. Skipped for now.")
