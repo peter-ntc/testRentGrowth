@@ -39,18 +39,24 @@ def home():
     with col1:
         if st.button("📈 Forecasting & Modeling"):
             st.session_state.page = "forecasting"
+            st.rerun()
         if st.button("🧠 Smart Benchmarks"):
             st.session_state.page = "benchmarks"
+            st.rerun()
     with col2:
         if st.button("⚙️ Optimizer"):
             st.session_state.page = "optimizer"
+            st.rerun()
         if st.button("📊 Secondaries Marketplace"):
             st.session_state.page = "secondaries"
+            st.rerun()
     with col3:
         if st.button("💼 Fund & Deal Pipeline"):
             st.session_state.page = "pipeline"
+            st.rerun()
         if st.button("📰 Market Research"):
             st.session_state.page = "research"
+            st.rerun()
 
 def coming_soon(section):
     st.title(section)
