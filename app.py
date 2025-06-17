@@ -49,7 +49,7 @@ def home():
 
 
 def coming_soon(section):
-    if st.button("🔙 Back to Home"):
+    if st.button("🔙 Back to Home", key="back_home_forecasting"):
         st.session_state.page = "home"
         return
 
