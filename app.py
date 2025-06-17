@@ -25,7 +25,7 @@ def render_clickable_logo(image_path, url, width=120):
 def show_back_button():
     if st.button("🔙 Back to Home", key=f"back_{st.session_state.page}"):
         st.session_state.page = "home"
-        st.experimental_rerun()
+        st.rerun()
 
 if "page" not in st.session_state:
     st.session_state.page = "home"
