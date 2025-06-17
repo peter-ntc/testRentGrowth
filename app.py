@@ -22,6 +22,11 @@ def render_clickable_logo(image_path, url, width=120):
     '''
     st.markdown(html, unsafe_allow_html=True)
 
+def show_back_button():
+    if st.button("🔙 Back to Home", key=f"back_{st.session_state.page}"):
+        st.session_state.page = "home"
+        st.experimental_rerun()
+
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
@@ -47,30 +52,14 @@ def home():
         if st.button("📰 Market Research"):
             st.session_state.page = "research"
 
-
 def coming_soon(section):
-    if st.button("🔙 Back to Home", key="back_btn_forecasting"):
-        st.session_state.page = "home"
-        return
-
-    
-
     st.title(section)
+    show_back_button()
     st.info("🚧 This section is under construction. Stay tuned!")
 
-
-def :
-    if st.button("🔙 Back to Home"):
-        st.session_state.page = "home"
-
 def forecasting_page():
-    if st.button("🔙 Back to Home"):
-        st.session_state.page = "home"
-        return
-
-    
-
     st.title("📈 Forecasting & Modeling")
+    show_back_button()
 
     excel_files = {
         "Base": "BaseScenario.xlsx",
@@ -161,6 +150,7 @@ def forecasting_page():
             csv = df.to_csv(index=False).encode("utf-8")
             st.download_button("Download as CSV", data=csv, file_name="forecast.csv")
 
+# Router
 if st.session_state.page == "home":
     home()
 elif st.session_state.page == "forecasting":
