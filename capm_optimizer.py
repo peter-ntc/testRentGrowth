@@ -10,6 +10,8 @@ warnings.filterwarnings("ignore")
 import os
 
 def run_capm_optimizer(input_file="capm input.xlsx", output_file="capm_output.xlsx"):
+    frontier_path = os.path.abspath("efficient_frontier.png")
+    weights_path = os.path.abspath("weights_stackplot.png")
     
     import numpy as np
     import pandas as pd
