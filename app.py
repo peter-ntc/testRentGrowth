@@ -11,6 +11,9 @@ if "page" not in st.session_state:
 def go_home():
     st.session_state.page = "home"
 
+def set_page(option):
+    st.session_state.page = f"option{option}"
+
 def render_option(option_num):
     st.title(f"Option {option_num}")
     st.subheader("🚧 Under Construction 🚧")
@@ -41,14 +44,12 @@ def landing_page():
     col1, col2, col3 = st.columns(3)
     for i, col in enumerate([col1, col2, col3], start=1):
         with col:
-            if st.button(f"Option {i}"):
-                st.session_state.page = f"option{i}"
+            st.button(f"Option {i}", on_click=set_page, args=(i,))
 
     col4, col5, col6 = st.columns(3)
     for i, col in enumerate([col4, col5, col6], start=4):
         with col:
-            if st.button(f"Option {i}"):
-                st.session_state.page = f"option{i}"
+            st.button(f"Option {i}", on_click=set_page, args=(i,))
 
 # Main app controller
 def main():
