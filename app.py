@@ -127,10 +127,10 @@ elif st.session_state.page == "capm_opt":
         excel_path, frontier_img, stackplot_img = run_capm_optimizer()
 
         st.subheader("Efficient Frontier")
-        st.image(frontier_img, use_column_width=True)
+        st.image(frontier_img, use_container_width=True)
 
         st.subheader("Optimized Sector Weights Over Risk Levels")
-        st.image(stackplot_img, use_column_width=True)
+        st.image(stackplot_img, use_container_width=True)
 
         with open(excel_path, "rb") as f:
             st.download_button("Download Optimization Results (Excel)", f, file_name=excel_path, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
