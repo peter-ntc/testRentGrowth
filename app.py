@@ -3,56 +3,68 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from capm_optimizer import run_capm_optimizer
+from scipy.optimize import minimize
 
-def capm_optimization_page():
-    st.image("townsendAI_logo_1.png", width=100)
-    st.title("📈 CAPM Optimization")
+st.set_page_config(page_title="CAPM Optimizer", layout="wide")
 
-    st.header("Efficient Frontier")
-
+def run_optimizer():
     try:
-        # Load input file
-        input_file = "capm_input.xlsx"
-        sectors = pd.read_excel(input_file, sheet_name=0, header=2, nrows=1).T
-        sectors.columns = ["Sector"]
-        returns = pd.read_excel(input_file, sheet_name=0, header=3, nrows=1).T
-        returns.columns = ["Expected Return"]
-        volatility = pd.read_excel(input_file, sheet_name=0, header=4, nrows=1).T
-        volatility.columns = ["Volatility"]
-        corr_matrix = pd.read_excel(input_file, sheet_name=0, header=7, nrows=14, index_col=0)
+        df = pd.read_excel("capm_input.xlsx", header=None)
 
-        # Display tables
-        summary_df = pd.concat([sectors, returns, volatility], axis=1).dropna()
-        summary_df.index = range(len(summary_df))
-        summary_df["Expected Return"] = (summary_df["Expected Return"]).map("{:.2%}".format)
-        summary_df["Volatility"] = (summary_df["Volatility"]).map("{:.2%}".format)
+        sectors = df.iloc[2, 1:15].tolist()
+        sectors = [s.strip() for s in sectors]
+        returns = df.iloc[3, 1:15].astype(float).values
+        volatilities = df.iloc[4, 1:15].astype(float).values
+        corr_matrix = df.iloc[8:22, 1:15].astype(float).values
+        cov_matrix = np.outer(volatilities, volatilities) * corr_matrix
 
-        st.subheader("Expected Returns and Volatility")
-        st.dataframe(summary_df)
+        num_assets = len(sectors)
 
-        st.subheader("Correlation Matrix")
-        corr_formatted = corr_matrix.applymap(lambda x: f"{x:.2%}")
-        st.dataframe(corr_formatted)
+        def portfolio_perf(weights):
+            port_return = np.dot(weights, returns)
+            port_std = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
+            return port_return, port_std
 
-        # Trigger optimizer
-        if st.button("Run Optimization"):
-            try:
-                run_capm_optimizer(input_file=input_file)
-                st.image("efficient_frontier.png", caption="Efficient Frontier", use_container_width=True)
-                st.success("Optimization complete. Please check the downloaded Excel output.")
-            except Exception as e:
-                st.error(f"Error running optimizer: {e}")
+        def objective(weights):
+            _, std = portfolio_perf(weights)
+            return std
+
+        constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
+        bounds = tuple((0, 1) for _ in range(num_assets))
+        init_guess = num_assets * [1. / num_assets]
+
+        result = minimize(objective, init_guess, method='SLSQP', bounds=bounds, constraints=constraints)
+
+        if result.success:
+            opt_weights = result.x
+            exp_return, exp_std = portfolio_perf(opt_weights)
+
+            st.subheader("Efficient Frontier")
+            plt.figure(figsize=(8, 5))
+            plt.bar(sectors, opt_weights)
+            plt.xticks(rotation=45, ha="right")
+            plt.title("Optimal Portfolio Weights")
+            plt.tight_layout()
+            st.pyplot(plt.gcf())
+
+            st.subheader("Portfolio Statistics")
+            st.write("**Expected Return:** {:.2%}".format(exp_return))
+            st.write("**Risk (Standard Deviation):** {:.2%}".format(exp_std))
+
+            output_df = pd.DataFrame({
+                "Sector": sectors,
+                "Weight": opt_weights
+            })
+            st.download_button("Download Results (CSV)", data=output_df.to_csv(index=False), file_name="capm_output.csv")
+        else:
+            st.error("Optimization failed.")
 
     except Exception as e:
         st.error(f"Failed to load or process 'capm_input.xlsx'. Error: {e}")
 
-def main():
-    st.set_page_config(page_title="TownsendAI", layout="centered")
-    page = st.sidebar.selectbox("Navigate", ["CAPM Optimization"])
+st.image("townsendAI_logo_1.png", width=100)
+st.title("📈 CAPM Optimization")
+st.subheader("Efficient Frontier")
 
-    if page == "CAPM Optimization":
-        capm_optimization_page()
-
-if __name__ == "__main__":
-    main()
+if st.button("Run Optimization"):
+    run_optimizer()
