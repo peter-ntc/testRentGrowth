@@ -1,8 +1,7 @@
 
 import streamlit as st
-from PIL import Image
 import pandas as pd
-import matplotlib.pyplot as plt
+from PIL import Image
 from io import BytesIO
 import base64
 
@@ -83,7 +82,37 @@ elif st.session_state.page == "optimizer":
             st.session_state.page = "fund_opt"
             st.rerun()
 elif st.session_state.page == "capm":
-    coming_soon("📉 CAPM")
+    st.title("📉 CAPM - Sector Inputs")
+    show_back_button()
+    file_path = "capm input.xlsx"
+    try:
+        capm_df = pd.read_excel(file_path, sheet_name=0, header=None)
+        sectors = capm_df.iloc[2, 1:15].tolist()
+        returns = capm_df.iloc[3, 1:15].tolist()
+        vols = capm_df.iloc[4, 1:15].tolist()
+        corr_matrix = capm_df.iloc[7:22, 0:15]
+        corr_matrix.columns = ["Sector"] + sectors
+        corr_matrix.set_index("Sector", inplace=True)
+
+        st.subheader("Expected Returns and Volatility")
+        df_summary = pd.DataFrame({
+            "Sector": sectors,
+            "Expected Return": returns,
+            "Volatility": vols
+        })
+        st.dataframe(df_summary)
+
+        st.subheader("Correlation Matrix")
+        st.dataframe(corr_matrix)
+
+        if st.button("Run Optimization"):
+            st.session_state.page = "capm_opt"
+            st.rerun()
+
+    except Exception as e:
+        st.error(f"Failed to load 'capm input.xlsx'. Please upload it to the app folder. Error: {e}")
+elif st.session_state.page == "capm_opt":
+    coming_soon("📉 CAPM Optimization")
 elif st.session_state.page == "sector_opt":
     coming_soon("📊 Sector Optimization")
 elif st.session_state.page == "fund_opt":
@@ -97,4 +126,4 @@ elif st.session_state.page == "secondaries":
 elif st.session_state.page == "research":
     coming_soon("📰 Market Research")
 elif st.session_state.page == "forecasting":
-    coming_soon("📈 Forecasting & Modeling")  # placeholder if actual logic is not restored
+    coming_soon("📈 Forecasting & Modeling")
