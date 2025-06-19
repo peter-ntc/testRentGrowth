@@ -105,7 +105,7 @@ elif st.session_state.page == "capm":
         st.subheader("Correlation Matrix")
         
 # Ensure correlation values are numeric and format safely
-corr_matrix = corr_matrix.apply(pd.to_numeric, errors="coerce")
+corr_matrix = corr_matrix.astype(float)
 st.dataframe(corr_matrix.style.format("{:.2%}"))
 
 
