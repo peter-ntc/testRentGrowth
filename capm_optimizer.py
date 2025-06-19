@@ -7,6 +7,8 @@ import seaborn as sns
 import warnings
 warnings.filterwarnings("ignore")
 
+import os
+
 def run_capm_optimizer(input_file="capm input.xlsx", output_file="capm_output.xlsx"):
     
     import numpy as np
@@ -144,4 +146,4 @@ def run_capm_optimizer(input_file="capm input.xlsx", output_file="capm_output.xl
     ws.add_image(img2, "R35")
     
     wb.save("capm_output.xlsx")
-    return output_file, "efficient_frontier.png", "weights_stackplot.png"
+    return output_file, frontier_path, weights_path
