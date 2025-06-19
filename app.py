@@ -1,6 +1,7 @@
 
 import streamlit as st
 import pandas as pd
+from capm_optimizer import run_capm_optimizer
 from PIL import Image
 from io import BytesIO
 import base64
