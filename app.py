@@ -19,7 +19,11 @@ def render_option(option_num):
         go_home()
 
 def landing_page():
-    st.image(logo, width=300)  # Resize logo
+    # Center and resize logo using columns
+    colA, colB, colC = st.columns([1, 2, 1])
+    with colB:
+        st.image(logo, width=250)
+
     st.title("TownsendAI")
     st.write("Welcome to the MVP. Please select an option:")
 
