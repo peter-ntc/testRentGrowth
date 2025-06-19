@@ -1,153 +1,48 @@
-
 import streamlit as st
 import pandas as pd
 from capm_optimizer import run_capm_optimizer
-from PIL import Image
-from io import BytesIO
-import base64
 
-st.set_page_config(page_title="TownsendAI", layout="centered")
-
-def render_clickable_logo(image_path, url, width=120):
-    img = Image.open(image_path)
-    buffered = BytesIO()
-    img.save(buffered, format="PNG")
-    img_str = base64.b64encode(buffered.getvalue()).decode()
-    html = f'''
-        <div style="text-align:center;">
-            <a href="{url}" target="_blank">
-                <img src="data:image/png;base64,{img_str}" width="{width}" style="margin-bottom: 1rem;" />
-            </a>
-        </div>
-    '''
-    st.markdown(html, unsafe_allow_html=True)
-
-def show_back_button():
-    if st.button("🔙 Back to Home", key=f"back_{st.session_state.page}"):
+def capm_optimization_page():
+    st.image("townsendAI_logo_1.png", width=100)
+    st.title("📈 CAPM Optimization")
+    if st.button("Back to Home", type="primary"):
         st.session_state.page = "home"
-        st.rerun()
 
-if "page" not in st.session_state:
-    st.session_state.page = "home"
-
-render_clickable_logo("townsendAI_logo 1.png", "https://townsendgroup.com")
-
-def home():
-    st.title("🏢 TownsendAI Platform")
-    st.markdown("### Explore our tools:")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("📈 Forecasting & Modeling"):
-            st.session_state.page = "forecasting"
-            st.rerun()
-        if st.button("🧠 Smart Benchmarks"):
-            st.session_state.page = "benchmarks"
-            st.rerun()
-    with col2:
-        if st.button("⚙️ Optimizer"):
-            st.session_state.page = "optimizer"
-            st.rerun()
-        if st.button("📊 Secondaries Marketplace"):
-            st.session_state.page = "secondaries"
-            st.rerun()
-    with col3:
-        if st.button("💼 Fund & Deal Pipeline"):
-            st.session_state.page = "pipeline"
-            st.rerun()
-        if st.button("📰 Market Research"):
-            st.session_state.page = "research"
-            st.rerun()
-
-def coming_soon(section):
-    st.title(section)
-    show_back_button()
-    st.info("🚧 This section is under construction. Stay tuned!")
-
-if st.session_state.page == "home":
-    home()
-elif st.session_state.page == "optimizer":
-    st.title("⚙️ Optimizer")
-    show_back_button()
-    st.markdown("### Choose an optimization tool:")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("📉 CAPM"):
-            st.session_state.page = "capm"
-            st.rerun()
-    with col2:
-        if st.button("📊 Sector Optimization"):
-            st.session_state.page = "sector_opt"
-            st.rerun()
-    with col3:
-        if st.button("💼 Fund Optimization"):
-            st.session_state.page = "fund_opt"
-            st.rerun()
-
-elif st.session_state.page == "capm":
-    st.title("📉 CAPM - Sector Inputs")
-    show_back_button()
-    file_path = "capm input.xlsx"
     try:
-        capm_df = pd.read_excel(file_path, sheet_name=0, header=None)
-        sectors = capm_df.iloc[2, 1:15].tolist()
-        returns = capm_df.iloc[3, 1:15].tolist()
-        vols = capm_df.iloc[4, 1:15].tolist()
-        corr_matrix = capm_df.iloc[7:22, 0:15]
-        corr_matrix.columns = ["Sector"] + sectors
-        corr_matrix.set_index("Sector", inplace=True)
-
+        df_returns = pd.read_excel("capm input.xlsx", sheet_name=0, usecols="B:O", nrows=2)
+        df_returns.index = ["Expected Return", "Volatility"]
+        sectors = pd.read_excel("capm input.xlsx", sheet_name=0, usecols="B:O", nrows=1, header=None).values.flatten()
+        df_returns.columns = sectors
+        df_returns = df_returns.T.reset_index()
+        df_returns.columns = ["Sector", "Expected Return", "Volatility"]
+        df_returns["Expected Return"] = df_returns["Expected Return"].map(lambda x: f"{x:.2%}")
+        df_returns["Volatility"] = df_returns["Volatility"].map(lambda x: f"{x:.2%}")
         st.subheader("Expected Returns and Volatility")
-        df_summary = pd.DataFrame({
-            "Sector": sectors,
-            "Expected Return": returns,
-            "Volatility": vols
-        })
-        st.dataframe(df_summary.style.format({"Expected Return": "{:.2%}", "Volatility": "{:.2%}"}))
+        st.dataframe(df_returns, use_container_width=True)
 
+        df_corr = pd.read_excel("capm input.xlsx", sheet_name=0, skiprows=7, usecols="B:O", nrows=14, header=None)
+        df_corr.columns = sectors
+        df_corr.index = sectors
+        df_corr_display = df_corr.copy().applymap(lambda x: f"{x:.2%}")
         st.subheader("Correlation Matrix")
-
-        st.subheader("Correlation Matrix")
-        corr_matrix_numeric = corr_matrix.copy()
-        corr_matrix_numeric = corr_matrix_numeric.apply(pd.to_numeric, errors="coerce")
-        st.dataframe(corr_matrix_numeric.style.format("{:.2%}"))
-
-
-        if st.button("Run Optimization"):
-            st.session_state.page = "capm_opt"
-            st.rerun()
+        st.dataframe(df_corr_display, use_container_width=True)
     except Exception as e:
         st.error(f"Failed to load or process 'capm input.xlsx'. Error: {e}")
+        return
 
-elif st.session_state.page == "capm_opt":
-    st.title("📈 CAPM Optimization")
-    show_back_button()
-    st.image("townsendAI_logo 1.png", width=100)
+    if st.button("Run Optimization"):
+        st.image("townsendAI_logo_1.png", width=80)
+        st.header("Efficient Frontier")
+        try:
+            image_bytes, excel_bytes = run_capm_optimizer()
+            st.image(image_bytes)
+            st.download_button("Download CAPM Output (Excel)", data=excel_bytes,
+                               file_name="capm_output.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        except Exception as e:
+            st.error(f"Error running optimizer: {e}")
 
-    try:
-        excel_path, frontier_img, stackplot_img = run_capm_optimizer()
+if "page" not in st.session_state:
+    st.session_state.page = "capm_optimization"
 
-        st.subheader("Efficient Frontier")
-        st.image(frontier_img, use_container_width=True)
-
-        st.subheader("Optimized Sector Weights Over Risk Levels")
-        st.image(stackplot_img, use_container_width=True)
-
-        with open(excel_path, "rb") as f:
-            st.download_button("Download Optimization Results (Excel)", f, file_name=excel_path, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    except Exception as e:
-        st.error(f"Error running optimizer: {e}")
-
-elif st.session_state.page == "sector_opt":
-    coming_soon("📊 Sector Optimization")
-elif st.session_state.page == "fund_opt":
-    coming_soon("💼 Fund Optimization")
-elif st.session_state.page == "pipeline":
-    coming_soon("💼 Fund & Deal Pipeline")
-elif st.session_state.page == "benchmarks":
-    coming_soon("🧠 Smart Benchmarks")
-elif st.session_state.page == "secondaries":
-    coming_soon("📊 Secondaries Marketplace")
-elif st.session_state.page == "research":
-    coming_soon("📰 Market Research")
-elif st.session_state.page == "forecasting":
-    coming_soon("📈 Forecasting & Modeling")
+if st.session_state.page == "capm_optimization":
+    capm_optimization_page()
