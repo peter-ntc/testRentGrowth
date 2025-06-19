@@ -117,8 +117,26 @@ elif st.session_state.page == "capm":
             st.rerun()
     except Exception as e:
         st.error(f"Failed to load or process 'capm input.xlsx'. Error: {e}")
+
 elif st.session_state.page == "capm_opt":
-    coming_soon("📉 CAPM Optimization")
+    st.title("📈 CAPM Optimization")
+    show_back_button()
+    st.image("townsendAI_logo 1.png", width=100)
+
+    try:
+        excel_path, frontier_img, stackplot_img = run_capm_optimizer()
+
+        st.subheader("Efficient Frontier")
+        st.image(frontier_img, use_column_width=True)
+
+        st.subheader("Optimized Sector Weights Over Risk Levels")
+        st.image(stackplot_img, use_column_width=True)
+
+        with open(excel_path, "rb") as f:
+            st.download_button("Download Optimization Results (Excel)", f, file_name=excel_path, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    except Exception as e:
+        st.error(f"Error running optimizer: {e}")
+
 elif st.session_state.page == "sector_opt":
     coming_soon("📊 Sector Optimization")
 elif st.session_state.page == "fund_opt":
