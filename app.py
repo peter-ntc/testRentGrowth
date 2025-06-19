@@ -103,7 +103,11 @@ elif st.session_state.page == "capm":
         st.dataframe(df_summary.style.format({"Expected Return": "{:.2%}", "Volatility": "{:.2%}"}))
 
         st.subheader("Correlation Matrix")
-        st.dataframe(corr_matrix.style.format("{:.2%}"))
+        
+# Ensure correlation values are numeric and format safely
+corr_matrix = corr_matrix.apply(pd.to_numeric, errors="coerce")
+st.dataframe(corr_matrix.style.format("{:.2%}"))
+
 
         if st.button("Run Optimization"):
             st.session_state.page = "capm_opt"
