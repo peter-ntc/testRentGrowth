@@ -81,6 +81,7 @@ elif st.session_state.page == "optimizer":
         if st.button("💼 Fund Optimization"):
             st.session_state.page = "fund_opt"
             st.rerun()
+
 elif st.session_state.page == "capm":
     st.title("📉 CAPM - Sector Inputs")
     show_back_button()
@@ -103,18 +104,14 @@ elif st.session_state.page == "capm":
         st.dataframe(df_summary.style.format({"Expected Return": "{:.2%}", "Volatility": "{:.2%}"}))
 
         st.subheader("Correlation Matrix")
-        
-# Ensure correlation values are numeric and format safely
-corr_matrix = corr_matrix.astype(float)
-st.dataframe(corr_matrix.style.format("{:.2%}"))
-
+        corr_matrix = corr_matrix.astype(float)
+        st.dataframe(corr_matrix.style.format("{:.2%}"))
 
         if st.button("Run Optimization"):
             st.session_state.page = "capm_opt"
             st.rerun()
-
     except Exception as e:
-        st.error(f"Failed to load 'capm input.xlsx'. Please upload it to the app folder. Error: {e}")
+        st.error(f"Failed to load or process 'capm input.xlsx'. Error: {e}")
 elif st.session_state.page == "capm_opt":
     coming_soon("📉 CAPM Optimization")
 elif st.session_state.page == "sector_opt":
