@@ -18,8 +18,7 @@ def render_option(option_num):
     st.title(f"Option {option_num}")
     st.subheader("🚧 Under Construction 🚧")
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🔙 Return to Home", use_container_width=True):
-        go_home()
+    st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
 
 def landing_page():
     # Center and resize logo using columns
