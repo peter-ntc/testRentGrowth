@@ -10,8 +10,9 @@ warnings.filterwarnings("ignore")
 import os
 
 def run_capm_optimizer(input_file="capm input.xlsx", output_file="capm_output.xlsx"):
-    frontier_path = os.path.abspath("efficient_frontier.png")
-    weights_path = os.path.abspath("weights_stackplot.png")
+    from io import BytesIO
+    frontier_img = BytesIO()
+    weights_img = BytesIO()
     
     import numpy as np
     import pandas as pd
@@ -148,4 +149,4 @@ def run_capm_optimizer(input_file="capm input.xlsx", output_file="capm_output.xl
     ws.add_image(img2, "R35")
     
     wb.save("capm_output.xlsx")
-    return output_file, frontier_path, weights_path
+    return output_file, frontier_img, weights_img
