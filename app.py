@@ -100,10 +100,10 @@ elif st.session_state.page == "capm":
             "Expected Return": returns,
             "Volatility": vols
         })
-        st.dataframe(df_summary)
+        st.dataframe(df_summary.style.format({"Expected Return": "{:.2%}", "Volatility": "{:.2%}"}))
 
         st.subheader("Correlation Matrix")
-        st.dataframe(corr_matrix)
+        st.dataframe(corr_matrix.style.format("{:.2%}"))
 
         if st.button("Run Optimization"):
             st.session_state.page = "capm_opt"
