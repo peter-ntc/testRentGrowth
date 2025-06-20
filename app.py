@@ -81,6 +81,21 @@ def render_forecasting_modeling():
             if df is not None:
                 st.pyplot(plot_chart(df, label))
 
+    # Fourth section: Comparison across scenarios
+    st.markdown("###")
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        st.button("Comparison across scenarios", disabled=True, use_container_width=True)
+    with col2:
+        st.info("Comparison chart coming soon!")
+        col1, col2 = st.columns([1, 3])
+        with col1:
+            st.button(label, disabled=True, use_container_width=True)
+        with col2:
+            df = safe_load_df(file, label)
+            if df is not None:
+                st.pyplot(plot_chart(df, label))
+
     st.markdown("<br>", unsafe_allow_html=True)
     st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
 
