@@ -93,9 +93,90 @@ def render_forecasting_modeling():
                 plot_chart(df_low, "Lower Growth & Inflation")
 
         
+        
+
+        # Add Return to Home button at bottom of page
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
+
+        
         row4_left, row4_right = st.columns([1, 3])
         with row4_left:
-            st.button("Compare ALL 3 scenarios", on_click=set_scenario, args=("compare",), key="btn_compare", use_container_width=True)
+            st.button("Compare ALL 3 scenarios", on_click=set_scenario, args=("compare",), key="btn_compare_main", use_container_width=True)
+        with row4_right:
+            try:
+                base = safe_load_df("BaseScenario.xlsx", "Consensus Economic Outlook")
+                high = safe_load_df("HighScenario.xlsx", "Higher Growth & Inflation")
+                low = safe_load_df("LowScenario.xlsx", "Lower Growth & Inflation")
+
+                def avg(df, label):
+                    return df.loc[label].mean() if df is not None else 0
+
+                metrics = ["GDP", "Inflation", "10 YR"]
+                consensus = [avg(base, m) * 100 for m in metrics]
+                high_growth = [avg(high, m) * 100 for m in metrics]
+                low_growth = [avg(low, m) * 100 for m in metrics]
+
+                x = np.arange(len(metrics))
+                width = 0.25
+
+                fig, ax = plt.subplots(figsize=(7, 5))
+                ax.bar(x - width, consensus, width, label="Consensus")
+                ax.bar(x, high_growth, width, label="High")
+                ax.bar(x + width, low_growth, width, label="Low")
+
+                ax.set_ylabel("Average (%)")
+                ax.set_title("Comparison of Average Metrics (2025–2030)")
+                ax.set_xticks(x)
+                ax.set_xticklabels(metrics)
+                ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.2f}%"))
+                ax.legend()
+                fig.tight_layout()
+                st.pyplot(fig)
+            except Exception as e:
+                st.warning(f"Unable to render comparison chart: {e}")
+
+        # Return to Home button at bottom
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
+
+        with row4_left:
+            st.button("Compare ALL 3 scenarios", on_click=set_scenario, args=("compare",), key="btn_compare_main", use_container_width=True)
+        with row4_right:
+            try:
+                base = safe_load_df("BaseScenario.xlsx", "Consensus Economic Outlook")
+                high = safe_load_df("HighScenario.xlsx", "Higher Growth & Inflation")
+                low = safe_load_df("LowScenario.xlsx", "Lower Growth & Inflation")
+
+                def avg(df, label):
+                    return df.loc[label].mean() if df is not None else 0
+
+                metrics = ["GDP", "Inflation", "10 YR"]
+                consensus = [avg(base, m) * 100 for m in metrics]
+                high_growth = [avg(high, m) * 100 for m in metrics]
+                low_growth = [avg(low, m) * 100 for m in metrics]
+
+                x = np.arange(len(metrics))
+                width = 0.25
+
+                fig, ax = plt.subplots(figsize=(7, 5))
+                ax.bar(x - width, consensus, width, label="Consensus")
+                ax.bar(x, high_growth, width, label="High")
+                ax.bar(x + width, low_growth, width, label="Low")
+
+                ax.set_ylabel("Average (%)")
+                ax.set_title("Comparison of Average Metrics (2025–2030)")
+                ax.set_xticks(x)
+                ax.set_xticklabels(metrics)
+                ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.2f}%"))
+                ax.legend()
+                fig.tight_layout()
+                st.pyplot(fig)
+            except Exception as e:
+                st.warning(f"Unable to render comparison chart: {e}")
+
+        with row4_left:
+            st.button("Compare ALL 3 scenarios", on_click=set_scenario, args=("compare",), key="btn_compare_main", use_container_width=True)
         with row4_right:
             # Show comparison chart beside button
             base = safe_load_df("BaseScenario.xlsx", "Consensus Economic Outlook")
@@ -127,7 +208,7 @@ def render_forecasting_modeling():
             fig.tight_layout()
             st.pyplot(fig)
 
-            st.button("Compare ALL 3 scenarios", on_click=set_scenario, args=("compare",), key="btn_compare", use_container_width=True)
+            st.button("Compare ALL 3 scenarios", on_click=set_scenario, args=("compare",), key="btn_compare_main", use_container_width=True)
 
     else:
         label_map = {
