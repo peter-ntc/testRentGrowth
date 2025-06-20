@@ -100,11 +100,31 @@ def render_forecasting_modeling():
         
         st.markdown("<br>", unsafe_allow_html=True)
         key_suffix = st.session_state.scenario or "overview"
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_{key_suffix}")
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_consensus")
+        elif label == "high":
+            df = safe_load_df("HighScenario.xlsx", label_map[label])
+            if df is not None:
+                plot_chart(df, label_map[label])
+            render_scenario_table("HighScenario.xlsx", key_prefix="high")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_high")
+        elif label == "low":
+            df = safe_load_df("LowScenario.xlsx", label_map[label])
+            if df is not None:
+                plot_chart(df, label_map[label])
+            render_scenario_table("LowScenario.xlsx", key_prefix="low")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_low")
+        elif label == "compare":
 
 
         
-        row4_left, row4_right = st.columns([1, 3])
+        
+        # Return to Home button only on overview
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_overview")
+
+row4_left, row4_right = st.columns([1, 3])
         with row4_left:
             st.button("Compare ALL 3 scenarios", on_click=set_scenario, args=("compare",), key="btn_compare_main", use_container_width=True)
         with row4_right:
@@ -145,7 +165,22 @@ def render_forecasting_modeling():
         
         st.markdown("<br>", unsafe_allow_html=True)
         key_suffix = st.session_state.scenario or "overview"
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_{key_suffix}")
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_consensus")
+        elif label == "high":
+            df = safe_load_df("HighScenario.xlsx", label_map[label])
+            if df is not None:
+                plot_chart(df, label_map[label])
+            render_scenario_table("HighScenario.xlsx", key_prefix="high")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_high")
+        elif label == "low":
+            df = safe_load_df("LowScenario.xlsx", label_map[label])
+            if df is not None:
+                plot_chart(df, label_map[label])
+            render_scenario_table("LowScenario.xlsx", key_prefix="low")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_low")
+        elif label == "compare":
 
 
         with row4_left:
@@ -250,7 +285,22 @@ def render_forecasting_modeling():
         
         st.markdown("<br>", unsafe_allow_html=True)
         key_suffix = st.session_state.scenario or "overview"
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_{key_suffix}")
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_consensus")
+        elif label == "high":
+            df = safe_load_df("HighScenario.xlsx", label_map[label])
+            if df is not None:
+                plot_chart(df, label_map[label])
+            render_scenario_table("HighScenario.xlsx", key_prefix="high")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_high")
+        elif label == "low":
+            df = safe_load_df("LowScenario.xlsx", label_map[label])
+            if df is not None:
+                plot_chart(df, label_map[label])
+            render_scenario_table("LowScenario.xlsx", key_prefix="low")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_low")
+        elif label == "compare":
 
 
 def render_option(option_num):
@@ -271,7 +321,22 @@ def render_option(option_num):
         
         st.markdown("<br>", unsafe_allow_html=True)
         key_suffix = st.session_state.scenario or "overview"
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_{key_suffix}")
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_consensus")
+        elif label == "high":
+            df = safe_load_df("HighScenario.xlsx", label_map[label])
+            if df is not None:
+                plot_chart(df, label_map[label])
+            render_scenario_table("HighScenario.xlsx", key_prefix="high")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_high")
+        elif label == "low":
+            df = safe_load_df("LowScenario.xlsx", label_map[label])
+            if df is not None:
+                plot_chart(df, label_map[label])
+            render_scenario_table("LowScenario.xlsx", key_prefix="low")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_low")
+        elif label == "compare":
 
 
 def landing_page():
