@@ -243,7 +243,7 @@ def render_option(option_num):
         with col1:
             st.button("CAPM", on_click=set_scenario, args=("capm",), key="btn_opt_capm", use_container_width=True)
         if st.session_state.get("scenario") == "capm":
-        render_capm_optimizer()
+            render_capm_optimizer()
             render_capm_optimizer()
         with col2:
             st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_opt_model", use_container_width=True)
@@ -251,7 +251,7 @@ def render_option(option_num):
         st.markdown("<br>", unsafe_allow_html=True)
         st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
     if st.session_state.get("scenario") == "capm":
-        render_capm_optimizer()
+            render_capm_optimizer()
     else:
         option_labels = [
             "Forecasting & Modeling",
