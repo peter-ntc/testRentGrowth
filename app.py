@@ -1,3 +1,5 @@
+from capm_module import parse_capm_input, run_capm_optimizer, plot_capm_frontier, write_capm_output
+
 
 import streamlit as st
 from PIL import Image
@@ -298,7 +300,37 @@ def landing_page():
 def main():
     if st.session_state.page == "home":
         landing_page()
-    elif st.session_state.page.startswith("option"):
+    
+
+elif st.session_state.scenario == "capm":
+    st.subheader("CAPM Optimizer")
+
+    uploaded_file = st.file_uploader("Upload CAPM Input File (capm_input.xlsx)", type=["xlsx"], key="capm_upload")
+    if uploaded_file:
+        try:
+            sectors, exp_ret, vol, corr, wmin, wmax, rf = parse_capm_input(uploaded_file)
+            df_result, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes = run_capm_optimizer(
+                sectors, exp_ret, vol, corr, wmin, wmax, rf)
+
+            # Plot and display
+            fig = plot_capm_frontier(df_result, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes)
+            st.pyplot(fig)
+
+            st.markdown("### Optimized Frontier Table")
+            st.dataframe(df_result.style.format({col: "{:.2%}" for col in df_result.columns if col != "Sharpe Ratio"}), use_container_width=True)
+
+            # Downloadable file
+            output = write_capm_output(df_result)
+            st.download_button("📥 Download CAPM Output", output, file_name="capm_output.xlsx", use_container_width=True)
+
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_capm")
+
+
+elif st.session_state.page.startswith("option"):
         option_num = st.session_state.page[-1]
         render_option(option_num)
 
