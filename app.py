@@ -97,7 +97,11 @@ def render_forecasting_modeling():
 
         # Add Return to Home button at bottom of page
         st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        key_suffix = st.session_state.scenario or "overview"
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_{key_suffix}")
+
 
         
         row4_left, row4_right = st.columns([1, 3])
@@ -138,7 +142,11 @@ def render_forecasting_modeling():
 
         # Return to Home button at bottom
         st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        key_suffix = st.session_state.scenario or "overview"
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_{key_suffix}")
+
 
         with row4_left:
             st.button("Compare ALL 3 scenarios", on_click=set_scenario, args=("compare",), key="btn_compare_main", use_container_width=True)
@@ -239,7 +247,11 @@ def render_forecasting_modeling():
             st.markdown("🚧 Under Construction 🚧")
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        key_suffix = st.session_state.scenario or "overview"
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_{key_suffix}")
+
 
 def render_option(option_num):
     if option_num == "1":
@@ -256,7 +268,11 @@ def render_option(option_num):
         st.title(option_names[int(option_num)-1])
         st.subheader("🚧 Under Construction 🚧")
         st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        key_suffix = st.session_state.scenario or "overview"
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_{key_suffix}")
+
 
 def landing_page():
     logo_path = BASE_DIR / "townsendAI_logo_1.png"
