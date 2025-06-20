@@ -2,6 +2,12 @@
 
 import streamlit as st
 
+def set_page(page_number):
+    def inner():
+        st.session_state.page = page_number
+    return inner
+
+
 
 import numpy as np
 import pandas as pd
