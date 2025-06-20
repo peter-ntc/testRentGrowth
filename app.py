@@ -2,9 +2,13 @@ import streamlit as st
 from PIL import Image
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
+
+# Setup base path
+BASE_DIR = Path(__file__).parent
 
 # Load logo
-logo = Image.open("townsendAI_logo_1.png")
+logo = Image.open(BASE_DIR / "townsendAI_logo_1.png")
 
 # Define routing state
 if "page" not in st.session_state:
@@ -48,10 +52,10 @@ def render_forecasting_modeling():
     st.title("Forecasting & Modeling")
     st.markdown("### Forecasting and Modeling supported for 3 economic scenarios.")
 
-    # Load Excel data from files in the same directory
-    base = pd.read_excel("BaseScenario.xlsx", header=None, usecols="C:I", skiprows=51, nrows=5)
-    high = pd.read_excel("HighScenario.xlsx", header=None, usecols="C:I", skiprows=51, nrows=5)
-    low = pd.read_excel("LowScenario.xlsx", header=None, usecols="C:I", skiprows=51, nrows=5)
+    # Load Excel data using robust paths
+    base = pd.read_excel(BASE_DIR / "BaseScenario.xlsx", header=None, usecols="C:I", skiprows=51, nrows=5)
+    high = pd.read_excel(BASE_DIR / "HighScenario.xlsx", header=None, usecols="C:I", skiprows=51, nrows=5)
+    low = pd.read_excel(BASE_DIR / "LowScenario.xlsx", header=None, usecols="C:I", skiprows=51, nrows=5)
 
     def clean(df):
         df_clean = df.iloc[1:4, 1:].copy()
