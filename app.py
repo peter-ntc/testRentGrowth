@@ -1,14 +1,10 @@
 import streamlit as st
 from PIL import Image
+import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load logo
 logo = Image.open("townsendAI_logo_1.png")
-
-# Load charts
-base_chart = "base_chart.png"
-high_chart = "high_chart.png"
-low_chart = "low_chart.png"
 
 # Define routing state
 if "page" not in st.session_state:
@@ -19,6 +15,17 @@ def go_home():
 
 def set_page(option):
     st.session_state.page = f"option{option}"
+
+def plot_chart(data, title):
+    fig, ax = plt.subplots(figsize=(6, 4))
+    for row in data.index:
+        ax.plot(data.columns, data.loc[row] * 100, label=row)
+    ax.set_title(title)
+    ax.set_ylabel("Percentage")
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.2f}%"))
+    ax.legend()
+    fig.tight_layout()
+    return fig
 
 def render_option(option_num):
     if option_num == "1":
@@ -41,6 +48,22 @@ def render_forecasting_modeling():
     st.title("Forecasting & Modeling")
     st.markdown("### Forecasting and Modeling supported for 3 economic scenarios.")
 
+    # Load Excel data from files in the same directory
+    base = pd.read_excel("BaseScenario.xlsx", header=None, usecols="C:I", skiprows=51, nrows=5)
+    high = pd.read_excel("HighScenario.xlsx", header=None, usecols="C:I", skiprows=51, nrows=5)
+    low = pd.read_excel("LowScenario.xlsx", header=None, usecols="C:I", skiprows=51, nrows=5)
+
+    def clean(df):
+        df_clean = df.iloc[1:4, 1:].copy()
+        df_clean.columns = ["2025", "2026", "2027", "2028", "2029", "2030"]
+        df_clean.index = ["GDP", "Inflation", "10 YR"]
+        return df_clean.astype(float)
+
+    base_data = clean(base)
+    high_data = clean(high)
+    low_data = clean(low)
+
+    # Layout with side labels and charts
     left_col, right_col = st.columns([1, 3])
 
     with left_col:
@@ -51,9 +74,9 @@ def render_forecasting_modeling():
         st.button("Lower Growth & Inflation", disabled=True, use_container_width=True)
 
     with right_col:
-        st.image(base_chart, caption="Consensus Economic Outlook", use_column_width=True)
-        st.image(high_chart, caption="Higher Growth & Inflation", use_column_width=True)
-        st.image(low_chart, caption="Lower Growth & Inflation", use_column_width=True)
+        st.pyplot(plot_chart(base_data, "Consensus Economic Outlook"))
+        st.pyplot(plot_chart(high_data, "Higher Growth & Inflation"))
+        st.pyplot(plot_chart(low_data, "Lower Growth & Inflation"))
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
