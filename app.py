@@ -425,7 +425,6 @@ if __name__ == "__main__":
 
 
 # ---------------- CAPM Optimizer Placeholder ----------------
-def # render_capm_optimizer()  # temporarily disable duplicates:
     import streamlit as st
     st.subheader("📉 CAPM Optimizer")
     st.info("🚧 This section is under construction. Please check back soon.")
