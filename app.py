@@ -301,9 +301,93 @@ def landing_page():
 
 
 def render_capm():
+def render_capm():
     st.title("CAPM Optimizer")
-    st.markdown("🚧 CAPM Module is Under Construction 🚧")
+    uploaded_file = st.file_uploader("Upload CAPM Input Excel File", type=["xlsx"], key="capm_upload")
+    if uploaded_file is not None:
+        try:
+            from io import BytesIO
+            import pandas as pd
+            import numpy as np
+            import matplotlib.pyplot as plt
+            from scipy.optimize import minimize
+
+            df_returns = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", nrows=2)
+            df_returns.index = ["Expected Return", "Volatility"]
+            sectors = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", nrows=1, header=None).values.flatten()
+            df_returns.columns = sectors
+
+            df_corr = pd.read_excel(uploaded_file, sheet_name=0, skiprows=7, usecols="B:O", nrows=14, header=None)
+            df_corr.columns = sectors
+            df_corr.index = sectors
+
+            mean_returns = df_returns.loc["Expected Return"]
+            volatilities = df_returns.loc["Volatility"]
+            cov_matrix = np.outer(volatilities, volatilities) * df_corr.to_numpy()
+            cov_df = pd.DataFrame(cov_matrix, index=sectors, columns=sectors)
+
+            def portfolio_performance(weights, mean_returns, cov_matrix):
+                returns = np.dot(weights, mean_returns)
+                std_dev = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
+                return returns, std_dev
+
+            def negative_sharpe(weights, mean_returns, cov_matrix, risk_free_rate=0.0):
+                p_return, p_std = portfolio_performance(weights, mean_returns, cov_matrix)
+                return -(p_return - risk_free_rate) / p_std
+
+            num_assets = len(sectors)
+            bounds = tuple((0, 1) for _ in range(num_assets))
+            constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
+            initial_weights = num_assets * [1. / num_assets,]
+
+            optimized = minimize(negative_sharpe, initial_weights,
+                                 args=(mean_returns, cov_matrix), method='SLSQP',
+                                 bounds=bounds, constraints=constraints)
+
+            opt_weights = optimized.x
+            opt_return, opt_std = portfolio_performance(opt_weights, mean_returns, cov_matrix)
+
+            # Efficient frontier chart
+            num_portfolios = 1000
+            results = np.zeros((3, num_portfolios))
+            for i in range(num_portfolios):
+                weights = np.random.random(num_assets)
+                weights /= np.sum(weights)
+                p_return, p_std = portfolio_performance(weights, mean_returns, cov_matrix)
+                results[0,i] = p_return
+                results[1,i] = p_std
+                results[2,i] = (p_return) / p_std
+
+            fig, ax = plt.subplots(figsize=(10,6))
+            scatter = ax.scatter(results[1,:], results[0,:], c=results[2,:], cmap='viridis', alpha=0.3)
+            ax.scatter(opt_std, opt_return, marker='*', color='r', s=100, label='Max Sharpe Ratio')
+            ax.set_title('Efficient Frontier')
+            ax.set_xlabel('Volatility')
+            ax.set_ylabel('Expected Return')
+            ax.legend()
+            st.pyplot(fig)
+
+            # Optimal weights table
+            output_df = pd.DataFrame({"Sector": sectors, "Weight": opt_weights})
+            output_df["Weight"] = output_df["Weight"].map(lambda x: f"{x:.2%}")
+            st.markdown("### Optimal Weights")
+            st.dataframe(output_df, use_container_width=True)
+
+            # Downloadable Excel
+            excel_buffer = BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
+                output_df.to_excel(writer, index=False, sheet_name='Optimal Weights')
+                writer.sheets['Optimal Weights'].set_column('A:B', 20)
+            excel_buffer.seek(0)
+            st.download_button(label="Download Weights as Excel",
+                               data=excel_buffer,
+                               file_name="optimal_weights.xlsx",
+                               mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+        except Exception as e:
+            st.error(f"An error occurred during optimization: {e}")
     st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_capm")
+
 
 def main():
     if st.session_state.page == "home":
