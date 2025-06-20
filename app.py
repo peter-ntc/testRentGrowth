@@ -105,7 +105,34 @@ def render_forecasting_modeling():
         def get_avg(df, label):
             return df.loc[label].mean() if df is not None else 0.0
 
-        avg_gdp = {
+        
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Prepare values
+metrics = ["GDP", "Inflation", "10 YR"]
+consensus = [avg_gdp["Consensus"] * 100, avg_inflation["Consensus"] * 100, avg_10yr["Consensus"] * 100]
+high = [avg_gdp["High"] * 100, avg_inflation["High"] * 100, avg_10yr["High"] * 100]
+low = [avg_gdp["Low"] * 100, avg_inflation["Low"] * 100, avg_10yr["Low"] * 100]
+
+x = np.arange(len(metrics))
+width = 0.25
+
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.bar(x - width, consensus, width, label="Consensus")
+ax.bar(x, high, width, label="High")
+ax.bar(x + width, low, width, label="Low")
+
+ax.set_ylabel("Average (%)")
+ax.set_title("Comparison of Average Metrics (2025–2030)")
+ax.set_xticks(x)
+ax.set_xticklabels(metrics)
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.2f}%"))
+ax.legend()
+fig.tight_layout()
+st.pyplot(fig)
+
+avg_gdp = {
             "Consensus": get_avg(safe_load_df("BaseScenario.xlsx", "Consensus Economic Outlook"), "GDP"),
             "High": get_avg(safe_load_df("HighScenario.xlsx", "Higher Growth & Inflation"), "GDP"),
             "Low": get_avg(safe_load_df("LowScenario.xlsx", "Lower Growth & Inflation"), "GDP")
