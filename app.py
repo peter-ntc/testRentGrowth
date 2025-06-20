@@ -399,33 +399,6 @@ def render_option(option_num):
                 st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_opt_model", use_container_width=True)
             st.markdown("<br>", unsafe_allow_html=True)
             st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
-        else:
-            st.title("Optimizer")
-            st.subheader("Choose a method to begin optimization:")
-            col1, col2 = st.columns(2)
-            with col1:
-                st.button("CAPM", on_click=set_scenario, args=("capm",), key="btn_opt_capm", use_container_width=True)
-            with col2:
-                st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_opt_model", use_container_width=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
-    else:
-        option_labels = [
-            "Forecasting & Modeling",
-            "Optimizer",
-            "Fund & Deal Pipeline",
-            "Smart Benchmarks",
-            "Secondaries Marketplace",
-            "Market Research"
-        ]
-        if option_num.isdigit():
-            st.title(option_labels[int(option_num)-1])
-        else:
-            st.title("Option")
-        st.subheader("🚧 Under Construction 🚧")
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_option{option_num}")
 def landing_page():
     logo_path = BASE_DIR / "townsendAI_logo_1.png"
     if logo_path.exists():
@@ -481,5 +454,3 @@ if __name__ == "__main__":
         st.session_state.page = "home"
     if st.session_state.page == "home":
         landing_page()
-    else:
-        render_option(st.session_state.page)
