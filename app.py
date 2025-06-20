@@ -31,6 +31,19 @@ def plot_chart(data, title):
     fig.tight_layout()
     return fig
 
+def safe_load_df(filename, scenario_label):
+    try:
+        df = pd.read_excel(BASE_DIR / filename, header=None, usecols="D:I", skiprows=52, nrows=3)
+        if df.shape[1] != 6:
+            st.warning(f"{scenario_label}: Expected 6 columns, found {df.shape[1]}. Please check Excel formatting.")
+            return None
+        df.columns = ["2025", "2026", "2027", "2028", "2029", "2030"]
+        df.index = ["GDP", "Inflation", "10 YR"]
+        return df.astype(float)
+    except Exception as e:
+        st.error(f"Failed to load {scenario_label} data: {e}")
+        return None
+
 def render_option(option_num):
     if option_num == "1":
         render_forecasting_modeling()
@@ -52,18 +65,10 @@ def render_forecasting_modeling():
     st.title("Forecasting & Modeling")
     st.markdown("### Forecasting and Modeling supported for 3 economic scenarios.")
 
-    # Load Excel data from specified range D53:I55 (skiprows=52, nrows=3)
-    def load_df(file):
-        df = pd.read_excel(BASE_DIR / file, header=None, usecols="D:I", skiprows=52, nrows=3)
-        df.columns = ["2025", "2026", "2027", "2028", "2029", "2030"]
-        df.index = ["GDP", "Inflation", "10 YR"]
-        return df.astype(float)
+    base_data = safe_load_df("BaseScenario.xlsx", "Consensus Economic Outlook")
+    high_data = safe_load_df("HighScenario.xlsx", "Higher Growth & Inflation")
+    low_data = safe_load_df("LowScenario.xlsx", "Lower Growth & Inflation")
 
-    base_data = load_df("BaseScenario.xlsx")
-    high_data = load_df("HighScenario.xlsx")
-    low_data = load_df("LowScenario.xlsx")
-
-    # Layout with side labels and charts
     left_col, right_col = st.columns([1, 3])
 
     with left_col:
@@ -74,9 +79,12 @@ def render_forecasting_modeling():
         st.button("Lower Growth & Inflation", disabled=True, use_container_width=True)
 
     with right_col:
-        st.pyplot(plot_chart(base_data, "Consensus Economic Outlook"))
-        st.pyplot(plot_chart(high_data, "Higher Growth & Inflation"))
-        st.pyplot(plot_chart(low_data, "Lower Growth & Inflation"))
+        if base_data is not None:
+            st.pyplot(plot_chart(base_data, "Consensus Economic Outlook"))
+        if high_data is not None:
+            st.pyplot(plot_chart(high_data, "Higher Growth & Inflation"))
+        if low_data is not None:
+            st.pyplot(plot_chart(low_data, "Lower Growth & Inflation"))
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
