@@ -156,6 +156,7 @@ def render_forecasting_modeling():
             render_scenario_table("LowScenario.xlsx", key_prefix="low")
             st.markdown("<br>", unsafe_allow_html=True)
             st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_low")
+        
         elif label == "compare":
             st.subheader("Compare ALL 3 scenarios")
 
@@ -175,40 +176,53 @@ def render_forecasting_modeling():
             selected = st.multiselect("Select up to 5 sectors to compare:", sectors, max_selections=5)
 
             if selected:
-                def extract(df):
-                    return df[df["Sector"].isin(selected)].set_index("Sector")[["Unlev_6yr", "Lev_6yr"]]
+                def extract(df, col):
+                    return df[df["Sector"].isin(selected)].set_index("Sector")[col]
 
-                b = extract(base_df).rename(columns={"Unlev_6yr": "Base_Unlev", "Lev_6yr": "Base_Lev"})
-                h = extract(high_df).rename(columns={"Unlev_6yr": "High_Unlev", "Lev_6yr": "High_Lev"})
-                l = extract(low_df).rename(columns={"Unlev_6yr": "Low_Unlev", "Lev_6yr": "Low_Lev"})
+                b_unlev = extract(base_df, "Unlev_6yr")
+                h_unlev = extract(high_df, "Unlev_6yr")
+                l_unlev = extract(low_df, "Unlev_6yr")
 
-                merged = pd.concat([b, h, l], axis=1)
+                b_lev = extract(base_df, "Lev_6yr")
+                h_lev = extract(high_df, "Lev_6yr")
+                l_lev = extract(low_df, "Lev_6yr")
 
-                fig, ax = plt.subplots(figsize=(10, 5))
-                width = 0.2
-                x = np.arange(len(merged.index))
+                x = np.arange(len(selected))
+                width = 0.25
 
-                ax.bar(x - width, merged["Base_Unlev"] * 100, width, label="Base Unlev")
-                ax.bar(x, merged["High_Unlev"] * 100, width, label="High Unlev")
-                ax.bar(x + width, merged["Low_Unlev"] * 100, width, label="Low Unlev")
+                # Chart 1: Unlevered Returns
+                fig1, ax1 = plt.subplots(figsize=(10, 5))
+                ax1.bar(x - width, b_unlev * 100, width, label="Base")
+                ax1.bar(x, h_unlev * 100, width, label="High")
+                ax1.bar(x + width, l_unlev * 100, width, label="Low")
+                ax1.set_xticks(x)
+                ax1.set_xticklabels(selected, rotation=45, ha='right')
+                ax1.set_ylabel("Unlevered Returns (%)")
+                ax1.set_title("Unlevered Property-Level Returns (6 Yr)")
+                ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.2f}%"))
+                ax1.legend()
+                fig1.tight_layout()
+                st.pyplot(fig1)
 
-                ax.bar(x - width, merged["Base_Lev"] * 100, width, bottom=merged["Base_Unlev"] * 100, alpha=0.3, label="Base Lev")
-                ax.bar(x, merged["High_Lev"] * 100, width, bottom=merged["High_Unlev"] * 100, alpha=0.3, label="High Lev")
-                ax.bar(x + width, merged["Low_Lev"] * 100, width, bottom=merged["Low_Unlev"] * 100, alpha=0.3, label="Low Lev")
-
-                ax.set_xticks(x)
-                ax.set_xticklabels(merged.index, rotation=45, ha='right')
-                ax.set_ylabel("Returns (%)")
-                ax.set_title("Sector Return Comparison (6 Yr)")
-                ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.2f}%"))
-                ax.legend()
-                fig.tight_layout()
-                st.pyplot(fig)
+                # Chart 2: Levered Returns
+                fig2, ax2 = plt.subplots(figsize=(10, 5))
+                ax2.bar(x - width, b_lev * 100, width, label="Base")
+                ax2.bar(x, h_lev * 100, width, label="High")
+                ax2.bar(x + width, l_lev * 100, width, label="Low")
+                ax2.set_xticks(x)
+                ax2.set_xticklabels(selected, rotation=45, ha='right')
+                ax2.set_ylabel("Levered Returns (%)")
+                ax2.set_title("Levered Fund Net Returns (6 Yr)")
+                ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.2f}%"))
+                ax2.legend()
+                fig2.tight_layout()
+                st.pyplot(fig2)
             else:
                 st.info("Please select up to 5 sectors to view comparison.")
 
             st.markdown("<br>", unsafe_allow_html=True)
             st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_compare")
+
 
 def render_option(option_num):
     if option_num == "1":
