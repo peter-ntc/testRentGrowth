@@ -360,7 +360,7 @@ def render_option(option_num):
             "Secondaries Marketplace",
             "Market Research"
         ]
-        st.title(option_labels[int(option_num)-1])
+        st.title(option_labels[int(option_num)-1]) if option_num.isdigit() else st.title("Option")
         st.subheader("🚧 Under Construction 🚧")
         st.markdown("<br>", unsafe_allow_html=True)
         st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_option{option_num}")
