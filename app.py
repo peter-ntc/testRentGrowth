@@ -50,11 +50,6 @@ def run_capm_optimizer(sectors, expected_returns, volatility, cor_matrix, min_we
         if result.success:
             frontier_risks.append(np.sqrt(result.fun))
             frontier_weights.append(result.x)
-        else:
-            pass
-            frontier_risks.append(np.nan)
-            frontier_weights.append([np.nan] * num_assets)
-
     sharpe_ratios = (target_returns - risk_free_rate) / np.array(frontier_risks)
     df_output = pd.DataFrame(frontier_weights, columns=sectors)
     df_output.insert(0, "Expected Return", target_returns)
@@ -223,8 +218,6 @@ def render_forecasting_modeling():
         st.markdown("<br>", unsafe_allow_html=True)
         st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_overview")
 
-    else:
-
         pass
         label = st.session_state.scenario
         if label == "consensus":
@@ -312,10 +305,6 @@ def render_forecasting_modeling():
                 ax2.legend()
                 fig2.tight_layout()
                 st.pyplot(fig2)
-            else:
-                pass
-                st.info("Please select up to 5 sectors to view comparison.")
-
             st.markdown("<br>", unsafe_allow_html=True)
             st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_compare")
 
@@ -384,36 +373,6 @@ def render_option(option_num):
                     st.error(f"An error occurred: {e}")
             st.markdown("<br>", unsafe_allow_html=True)
             st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_capm")
-        else:
-            pass
-            st.title("Optimizer")
-            st.subheader("Choose a method to begin optimization:")
-            col1, col2 = st.columns(2)
-            with col1:
-                st.button("CAPM", on_click=set_scenario, args=("capm",), key="btn_opt_capm", use_container_width=True)
-            with col2:
-                st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_opt_model", use_container_width=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
-        else:
-            pass
-            st.title("Optimizer")
-            st.subheader("Choose a method to begin optimization:")
-            col1, col2 = st.columns(2)
-            with col1:
-                st.button("CAPM", on_click=set_scenario, args=("capm",), key="btn_opt_capm", use_container_width=True)
-            with col2:
-                st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_opt_model", use_container_width=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
-def landing_page():
-    logo_path = BASE_DIR / "townsendAI_logo_1.png"
-    if logo_path.exists():
-        logo = Image.open(logo_path)
-        colA, colB, colC = st.columns([1, 2, 1])
-        with colB:
-            st.image(logo, width=250)
-
     st.title("TownsendAI")
     st.write("Welcome to the MVP. Please select an option:")
 
