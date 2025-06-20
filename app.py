@@ -29,6 +29,25 @@ def set_page(option):
 def set_scenario(name):
     st.session_state.scenario = name
 
+
+def render_scenario_table(filename):
+    try:
+        df = pd.read_excel(BASE_DIR / filename, header=None, usecols="C,D,K,L,N,O,P,Q,R,S,V,W,AE,AF", skiprows=2, nrows=19)
+        df.columns = [
+            "Sector", "Entry Cap Rate", "Exit Cap Rate Year 3", "Exit Cap Rate Year 6",
+            "Rent Growth Year 1", "Rent Growth Year 2", "Rent Growth Year 3",
+            "Rent Growth Year 4", "Rent Growth Year 5", "Rent Growth Year 6",
+            "3 Yr Unlevered Property Returns", "6 Yr Unlevered Property Returns",
+            "3 Yr Levered Fund Net Returns", "6 Yr Levered Fund Net Returns"
+        ]
+        for col in df.columns[1:]:
+            df[col] = df[col].apply(lambda x: f"{x:.2%}")
+        st.markdown("### Sector Summary Table")
+        st.dataframe(df, use_container_width=True)
+    except Exception as e:
+        st.error(f"Error loading table: {e}")
+
+
 def safe_load_df(filename, label):
     try:
         df = pd.read_excel(BASE_DIR / filename, header=None, usecols="D:I", skiprows=52, nrows=3)
@@ -68,10 +87,68 @@ def render_consensus_table():
         st.error(f"Error loading table: {e}")
 
 def render_forecasting_modeling():
-    if st.session_state.scenario is None:
-        st.title("Forecasting & Modeling")
-        st.markdown("### Forecasting and Modeling supported for 3 economic scenarios.")
+    st.title("Forecasting & Modeling")
+    st.markdown("### Forecasting and Modeling supported for 3 economic scenarios.")
 
+    if st.session_state.scenario is None:
+        # Row 1
+        row1_left, row1_right = st.columns([1, 3])
+        with row1_left:
+            st.button("Consensus Economic Outlook", on_click=set_scenario, args=("consensus",), key="btn_consensus", use_container_width=True)
+        with row1_right:
+            df_base = safe_load_df("BaseScenario.xlsx", "Consensus Economic Outlook")
+            if df_base is not None:
+                plot_chart(df_base, "Consensus Economic Outlook")
+
+        # Row 2
+        row2_left, row2_right = st.columns([1, 3])
+        with row2_left:
+            st.button("Higher Growth & Inflation", on_click=set_scenario, args=("high",), key="btn_high", use_container_width=True)
+        with row2_right:
+            df_high = safe_load_df("HighScenario.xlsx", "Higher Growth & Inflation")
+            if df_high is not None:
+                plot_chart(df_high, "Higher Growth & Inflation")
+
+        # Row 3
+        row3_left, row3_right = st.columns([1, 3])
+        with row3_left:
+            st.button("Lower Growth & Inflation", on_click=set_scenario, args=("low",), key="btn_low", use_container_width=True)
+        with row3_right:
+            df_low = safe_load_df("LowScenario.xlsx", "Lower Growth & Inflation")
+            if df_low is not None:
+                plot_chart(df_low, "Lower Growth & Inflation")
+
+        # Row 4
+        row4_left, _ = st.columns([1, 3])
+        with row4_left:
+            st.button("Compare ALL 3 scenarios", on_click=set_scenario, args=("compare",), key="btn_compare", use_container_width=True)
+
+    elif st.session_state.scenario:
+        label_map = {
+            "consensus": "Consensus Economic Outlook",
+            "high": "Higher Growth & Inflation",
+            "low": "Lower Growth & Inflation",
+            "benchmarks": "Smart Benchmarks",
+            "compare": "Compare ALL 3 scenarios"
+        }
+        label = st.session_state.scenario
+        st.subheader(label_map.get(label, "Scenario"))
+
+        if label == "consensus":
+            df = safe_load_df("BaseScenario.xlsx", label_map[label])
+            if df is not None:
+                plot_chart(df, label_map[label])
+            render_consensus_table()
+        else:
+            st.markdown("🚧 Under Construction 🚧")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
+
+    st.title("Forecasting & Modeling")
+    st.markdown("### Forecasting and Modeling supported for 3 economic scenarios.")
+
+    if st.session_state.scenario is None:
         col1, col2 = st.columns(2)
         with col1:
             st.button("Consensus Economic Outlook", on_click=set_scenario, args=("consensus",), use_container_width=True)
@@ -106,18 +183,6 @@ def render_forecasting_modeling():
             if df is not None:
                 plot_chart(df, label_map[label])
             render_consensus_table()
-
-        elif label == "high":
-            df = safe_load_df("HighScenario.xlsx", label_map[label])
-            if df is not None:
-                plot_chart(df, label_map[label])
-            render_scenario_table("HighScenario.xlsx")
-
-        elif label == "low":
-            df = safe_load_df("LowScenario.xlsx", label_map[label])
-            if df is not None:
-                plot_chart(df, label_map[label])
-            render_scenario_table("LowScenario.xlsx")
         else:
             st.markdown("🚧 Under Construction 🚧")
 
