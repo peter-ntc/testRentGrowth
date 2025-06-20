@@ -65,26 +65,21 @@ def render_forecasting_modeling():
     st.title("Forecasting & Modeling")
     st.markdown("### Forecasting and Modeling supported for 3 economic scenarios.")
 
-    base_data = safe_load_df("BaseScenario.xlsx", "Consensus Economic Outlook")
-    high_data = safe_load_df("HighScenario.xlsx", "Higher Growth & Inflation")
-    low_data = safe_load_df("LowScenario.xlsx", "Lower Growth & Inflation")
+    # Load all scenario data
+    scenarios = [
+        ("Consensus Economic Outlook", "BaseScenario.xlsx"),
+        ("Higher Growth & Inflation", "HighScenario.xlsx"),
+        ("Lower Growth & Inflation", "LowScenario.xlsx")
+    ]
 
-    left_col, right_col = st.columns([1, 3])
-
-    with left_col:
-        st.button("Consensus Economic Outlook", disabled=True, use_container_width=True)
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.button("Higher Growth & Inflation", disabled=True, use_container_width=True)
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.button("Lower Growth & Inflation", disabled=True, use_container_width=True)
-
-    with right_col:
-        if base_data is not None:
-            st.pyplot(plot_chart(base_data, "Consensus Economic Outlook"))
-        if high_data is not None:
-            st.pyplot(plot_chart(high_data, "Higher Growth & Inflation"))
-        if low_data is not None:
-            st.pyplot(plot_chart(low_data, "Lower Growth & Inflation"))
+    for label, file in scenarios:
+        col1, col2 = st.columns([1, 3])
+        with col1:
+            st.button(label, disabled=True, use_container_width=True)
+        with col2:
+            df = safe_load_df(file, label)
+            if df is not None:
+                st.pyplot(plot_chart(df, label))
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
