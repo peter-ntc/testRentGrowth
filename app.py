@@ -12,22 +12,32 @@ BASE_DIR = Path(__file__).parent
 # Load logo
 logo = Image.open(BASE_DIR / "townsendAI_logo_1.png")
 
-# Define routing state
+# Initialize session state
 if "page" not in st.session_state:
     st.session_state.page = "home"
-if "subpage" not in st.session_state:
-    st.session_state.subpage = None
+if "scenario" not in st.session_state:
+    st.session_state.scenario = None
 
 def go_home():
     st.session_state.page = "home"
-    st.session_state.subpage = None
-
-def go_subpage(name):
-    st.session_state.subpage = name
+    st.session_state.scenario = None
 
 def set_page(option):
     st.session_state.page = f"option{option}"
-    st.session_state.subpage = None
+    st.session_state.scenario = None
+
+def set_scenario(name):
+    st.session_state.scenario = name
+
+def safe_load_df(filename, label):
+    try:
+        df = pd.read_excel(BASE_DIR / filename, header=None, usecols="D:I", skiprows=52, nrows=3)
+        df.columns = ["2025", "2026", "2027", "2028", "2029", "2030"]
+        df.index = ["GDP", "Inflation", "10 YR"]
+        return df.astype(float)
+    except Exception as e:
+        st.error(f"Failed to load {label}: {e}")
+        return None
 
 def plot_chart(data, title):
     fig, ax = plt.subplots(figsize=(6, 4))
@@ -39,19 +49,6 @@ def plot_chart(data, title):
     ax.legend()
     fig.tight_layout()
     st.pyplot(fig)
-
-def safe_load_df(filename, scenario_label):
-    try:
-        df = pd.read_excel(BASE_DIR / filename, header=None, usecols="D:I", skiprows=52, nrows=3)
-        if df.shape[1] != 6:
-            st.warning(f"{scenario_label}: Expected 6 columns, found {df.shape[1]}. Please check Excel formatting.")
-            return None
-        df.columns = ["2025", "2026", "2027", "2028", "2029", "2030"]
-        df.index = ["GDP", "Inflation", "10 YR"]
-        return df.astype(float)
-    except Exception as e:
-        st.error(f"Failed to load {scenario_label} data: {e}")
-        return None
 
 def render_consensus_table():
     try:
@@ -70,6 +67,51 @@ def render_consensus_table():
     except Exception as e:
         st.error(f"Error loading table: {e}")
 
+def render_forecasting_modeling():
+    st.title("Forecasting & Modeling")
+    st.markdown("### Forecasting and Modeling supported for 3 economic scenarios.")
+
+    if st.session_state.scenario is None:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.button("Consensus Economic Outlook", on_click=set_scenario, args=("consensus",), use_container_width=True)
+            st.button("Higher Growth & Inflation", on_click=set_scenario, args=("high",), use_container_width=True)
+        with col2:
+            st.button("Lower Growth & Inflation", on_click=set_scenario, args=("low",), use_container_width=True)
+            st.button("Smart Benchmarks", on_click=set_scenario, args=("benchmarks",), use_container_width=True)
+
+        # Show all 3 scenario charts here
+        df_base = safe_load_df("BaseScenario.xlsx", "Consensus Economic Outlook")
+        df_high = safe_load_df("HighScenario.xlsx", "Higher Growth & Inflation")
+        df_low = safe_load_df("LowScenario.xlsx", "Lower Growth & Inflation")
+
+        if df_base is not None:
+            plot_chart(df_base, "Consensus Economic Outlook")
+        if df_high is not None:
+            plot_chart(df_high, "Higher Growth & Inflation")
+        if df_low is not None:
+            plot_chart(df_low, "Lower Growth & Inflation")
+    else:
+        label_map = {
+            "consensus": "Consensus Economic Outlook",
+            "high": "Higher Growth & Inflation",
+            "low": "Lower Growth & Inflation",
+            "benchmarks": "Smart Benchmarks"
+        }
+        label = st.session_state.scenario
+        st.subheader(label_map.get(label, "Scenario"))
+
+        if label == "consensus":
+            df = safe_load_df("BaseScenario.xlsx", label_map[label])
+            if df is not None:
+                plot_chart(df, label_map[label])
+            render_consensus_table()
+        else:
+            st.markdown("🚧 Under Construction 🚧")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
+
 def render_option(option_num):
     if option_num == "1":
         render_forecasting_modeling()
@@ -84,42 +126,6 @@ def render_option(option_num):
         ]
         st.title(option_names[int(option_num)-1])
         st.subheader("🚧 Under Construction 🚧")
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
-
-def render_forecasting_modeling():
-    st.title("Forecasting & Modeling")
-    st.markdown("### Forecasting and Modeling supported for 3 economic scenarios.")
-
-    if st.session_state.subpage is None:
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Consensus Economic Outlook"):
-                go_subpage("consensus")
-            if st.button("Higher Growth & Inflation"):
-                go_subpage("high")
-        with col2:
-            if st.button("Lower Growth & Inflation"):
-                go_subpage("low")
-            if st.button("Smart Benchmarks"):
-                go_subpage("benchmarks")
-    else:
-        label_map = {
-            "consensus": "Consensus Economic Outlook",
-            "high": "Higher Growth & Inflation",
-            "low": "Lower Growth & Inflation",
-            "benchmarks": "Smart Benchmarks"
-        }
-        st.subheader(label_map.get(st.session_state.subpage, "Scenario"))
-
-        if st.session_state.subpage == "consensus":
-            df = safe_load_df("BaseScenario.xlsx", "Consensus Economic Outlook")
-            if df is not None:
-                plot_chart(df, "Consensus Economic Outlook")
-            render_consensus_table()
-        else:
-            st.markdown("🚧 Under Construction 🚧")
-
         st.markdown("<br>", unsafe_allow_html=True)
         st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
 
@@ -162,7 +168,6 @@ def landing_page():
         with col:
             st.button(option_labels[i], on_click=set_page, args=(i+1,))
 
-# Main app controller
 def main():
     if st.session_state.page == "home":
         landing_page()
