@@ -52,20 +52,16 @@ def render_forecasting_modeling():
     st.title("Forecasting & Modeling")
     st.markdown("### Forecasting and Modeling supported for 3 economic scenarios.")
 
-    # Load Excel data using robust paths
-    base = pd.read_excel(BASE_DIR / "BaseScenario.xlsx", header=None, usecols="C:I", skiprows=51, nrows=5)
-    high = pd.read_excel(BASE_DIR / "HighScenario.xlsx", header=None, usecols="C:I", skiprows=51, nrows=5)
-    low = pd.read_excel(BASE_DIR / "LowScenario.xlsx", header=None, usecols="C:I", skiprows=51, nrows=5)
+    # Load Excel data from specified range D53:I55 (skiprows=52, nrows=3)
+    def load_df(file):
+        df = pd.read_excel(BASE_DIR / file, header=None, usecols="D:I", skiprows=52, nrows=3)
+        df.columns = ["2025", "2026", "2027", "2028", "2029", "2030"]
+        df.index = ["GDP", "Inflation", "10 YR"]
+        return df.astype(float)
 
-    def clean(df):
-        df_clean = df.iloc[1:4, 1:].copy()
-        df_clean.columns = ["2025", "2026", "2027", "2028", "2029", "2030"]
-        df_clean.index = ["GDP", "Inflation", "10 YR"]
-        return df_clean.astype(float)
-
-    base_data = clean(base)
-    high_data = clean(high)
-    low_data = clean(low)
+    base_data = load_df("BaseScenario.xlsx")
+    high_data = load_df("HighScenario.xlsx")
+    low_data = load_df("LowScenario.xlsx")
 
     # Layout with side labels and charts
     left_col, right_col = st.columns([1, 3])
