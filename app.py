@@ -224,37 +224,22 @@ def render_forecasting_modeling():
             st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_compare")
 
 
+
 def render_option(option_num):
-    label_map = {"1": "forecasting", "2": "optimizer"}
     if option_num == "1":
         render_forecasting_modeling()
-
     elif option_num == "2":
         st.title("Optimizer")
         st.subheader("Choose a method to begin optimization:")
 
         col1, col2 = st.columns(2)
         with col1:
-            st.button("CAPM", on_click=set_scenario, args=("capm",), key="btn_capm", use_container_width=True)
+            st.button("CAPM", on_click=set_scenario, args=("capm",), key="btn_opt_capm", use_container_width=True)
         with col2:
-            st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_model", use_container_width=True)
+            st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_opt_model", use_container_width=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
-    
-        st.title("Optimizer")
-        st.subheader("Choose a method to begin optimization:")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            st.button("CAPM", on_click=set_scenario, args=("capm",), key="btn_capm", use_container_width=True)
-        with col2:
-            st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_model", use_container_width=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
-
-        render_forecasting_modeling()
     else:
         option_labels = [
             "Forecasting & Modeling",
@@ -268,7 +253,6 @@ def render_option(option_num):
         st.subheader("🚧 Under Construction 🚧")
         st.markdown("<br>", unsafe_allow_html=True)
         st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_option{option_num}")
-
 def landing_page():
     logo_path = BASE_DIR / "townsendAI_logo_1.png"
     if logo_path.exists():
