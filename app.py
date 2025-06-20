@@ -241,6 +241,16 @@ def render_option(option_num):
                 st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_opt_model", use_container_width=True)
             st.markdown("<br>", unsafe_allow_html=True)
             st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
+        else:
+            st.title("Optimizer")
+            st.subheader("Choose a method to begin optimization:")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.button("CAPM", on_click=set_scenario, args=("capm",), key="btn_opt_capm", use_container_width=True)
+            with col2:
+                st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_opt_model", use_container_width=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
     if st.session_state.scenario == "capm":
         render_capm()
     else:
