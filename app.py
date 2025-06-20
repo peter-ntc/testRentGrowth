@@ -240,6 +240,10 @@ def render_option(option_num):
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
+
+    # Render submodule if chosen
+    if st.session_state.scenario == "capm":
+        render_capm()
     else:
         option_labels = [
             "Forecasting & Modeling",
@@ -294,6 +298,12 @@ def landing_page():
     for i, col in enumerate([col4, col5, col6], start=3):
         with col:
             st.button(option_labels[i], on_click=set_page, args=(i+1,), key=f"btn_{i}")
+
+
+def render_capm():
+    st.title("CAPM Optimizer")
+    st.markdown("🚧 CAPM Module is Under Construction 🚧")
+    st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_capm")
 
 def main():
     if st.session_state.page == "home":
