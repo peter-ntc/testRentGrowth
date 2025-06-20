@@ -106,6 +106,18 @@ def render_forecasting_modeling():
             if df is not None:
                 plot_chart(df, label_map[label])
             render_consensus_table()
+
+        elif label == "high":
+            df = safe_load_df("HighScenario.xlsx", label_map[label])
+            if df is not None:
+                plot_chart(df, label_map[label])
+            render_scenario_table("HighScenario.xlsx")
+
+        elif label == "low":
+            df = safe_load_df("LowScenario.xlsx", label_map[label])
+            if df is not None:
+                plot_chart(df, label_map[label])
+            render_scenario_table("LowScenario.xlsx")
         else:
             st.markdown("🚧 Under Construction 🚧")
 
