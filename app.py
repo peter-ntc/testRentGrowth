@@ -322,29 +322,23 @@ def render_option(option_num):
     if option_num == "1":
         render_forecasting_modeling()
     elif option_num == "2":
-        if "scenario" in st.session_state and st.session_state.scenario == "capm":
-            st.subheader("CAPM Optimizer")
-
-            uploaded_file = st.file_uploader("Upload CAPM Input File (capm_input.xlsx)", type=["xlsx"], key="capm_upload")
-            if uploaded_file:
-                try:
-                    sectors, exp_ret, vol, corr, wmin, wmax, rf = parse_capm_input(uploaded_file)
-                    df_result, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes = run_capm_optimizer(
-                        sectors, exp_ret, vol, corr, wmin, wmax, rf)
-
-                    fig = plot_capm_frontier(df_result, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes)
-                    st.pyplot(fig)
-
-                    st.markdown("### Optimized Frontier Table")
-                    st.dataframe(df_result.style.format({col: "{:.2%}" for col in df_result.columns if col != "Sharpe Ratio"}), use_container_width=True)
-
-                    output = write_capm_output(df_result)
-                    st.download_button("📥 Download CAPM Output", output, file_name="capm_output.xlsx", use_container_width=True)
-
-                except Exception as e:
-                    st.error(f"An error occurred: {e}")
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_capm")
+        st.subheader("CAPM Optimizer")
+        uploaded_file = st.file_uploader("Upload CAPM Input File (capm_input.xlsx)", type=["xlsx"], key="capm_upload")
+        if uploaded_file:
+            try:
+                sectors, exp_ret, vol, corr, wmin, wmax, rf = parse_capm_input(uploaded_file)
+                df_result, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes = run_capm_optimizer(
+                    sectors, exp_ret, vol, corr, wmin, wmax, rf)
+                fig = plot_capm_frontier(df_result, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes)
+                st.pyplot(fig)
+                st.markdown("### Optimized Frontier Table")
+                st.dataframe(df_result.style.format({col: "{:.2%}" for col in df_result.columns if col != "Sharpe Ratio"}), use_container_width=True)
+                output = write_capm_output(df_result)
+                st.download_button("📥 Download CAPM Output", output, file_name="capm_output.xlsx", use_container_width=True)
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_capm")
         else:
             st.title("Optimizer")
             st.subheader("Choose a method to begin optimization:")
