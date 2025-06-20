@@ -87,7 +87,9 @@ def render_forecasting_modeling():
     with col1:
         st.button("Comparison across scenarios", disabled=True, use_container_width=True)
     with col2:
-        st.info("Comparison chart coming soon!")
+        st.image(str(BASE_DIR / "avg_gdp.png"), caption="Average GDP (2025–2030)", use_column_width=True)
+        st.image(str(BASE_DIR / "avg_inflation.png"), caption="Average Inflation (2025–2030)", use_column_width=True)
+        st.image(str(BASE_DIR / "avg_10yr.png"), caption="Average 10 YR (2025–2030)", use_column_width=True)
         col1, col2 = st.columns([1, 3])
         with col1:
             st.button(label, disabled=True, use_container_width=True)
