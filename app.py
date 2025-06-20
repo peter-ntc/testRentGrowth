@@ -1,96 +1,5 @@
 
-
 import streamlit as st
-
-def set_page(page_number):
-    def inner():
-        st.session_state.page = page_number
-    return inner
-
-
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from scipy.optimize import minimize
-import matplotlib.ticker as mtick
-from io import BytesIO
-
-def parse_capm_input(uploaded_file):
-    sheet = pd.read_excel(uploaded_file, header=None)
-    sectors = sheet.loc[2, 1:15].values
-    expected_returns = sheet.loc[3, 1:15].astype(float).values
-    volatility = sheet.loc[4, 1:15].astype(float).values
-    cor_matrix = sheet.loc[8:21, 1:14].astype(float).values
-    min_weights = sheet.loc[24, 1:15].astype(float).values
-    max_weights = sheet.loc[25, 1:15].astype(float).values
-    risk_free_rate = float(sheet.loc[35, 1])
-    return sectors, expected_returns, volatility, cor_matrix, min_weights, max_weights, risk_free_rate
-
-def run_capm_optimizer(sectors, expected_returns, volatility, cor_matrix, min_weights, max_weights, risk_free_rate):
-    i_lower = np.tril_indices_from(cor_matrix, -1)
-    cor_matrix[i_lower[::-1]] = cor_matrix[i_lower]
-    D = np.diag(volatility)
-    cov_matrix = D @ cor_matrix @ D
-
-    num_assets = len(expected_returns)
-    num_points = 50
-    target_returns = np.linspace(min(expected_returns), max(expected_returns), num_points)
-
-    frontier_risks, frontier_weights = [], []
-    for target in target_returns:
-        constraints = [
-            {'type': 'eq', 'fun': lambda w: np.sum(w) - 1},
-            {'type': 'eq', 'fun': lambda w: w @ expected_returns - target}
-        ]
-        bounds = tuple(zip(min_weights, max_weights))
-        init_guess = np.repeat(1 / num_assets, num_assets)
-
-        result = minimize(lambda w: w.T @ cov_matrix @ w, init_guess, method='SLSQP', bounds=bounds, constraints=constraints)
-        if result.success:
-            frontier_risks.append(np.sqrt(result.fun))
-            frontier_weights.append(result.x)
-        else:
-            frontier_risks.append(np.nan)
-            frontier_weights.append([np.nan] * num_assets)
-
-    sharpe_ratios = (target_returns - risk_free_rate) / np.array(frontier_risks)
-    df_output = pd.DataFrame(frontier_weights, columns=sectors)
-    df_output.insert(0, "Expected Return", target_returns)
-    df_output.insert(1, "Portfolio Risk", frontier_risks)
-    df_output["Sharpe Ratio"] = sharpe_ratios
-    max_idx = np.nanargmax(sharpe_ratios)
-
-    sim_weights = np.random.dirichlet(np.ones(num_assets), size=10000)
-    sim_returns = sim_weights @ expected_returns
-    sim_risks = np.sqrt(np.einsum('ij,jk,ik->i', sim_weights, cov_matrix, sim_weights))
-    sim_sharpes = (sim_returns - risk_free_rate) / sim_risks
-
-    return df_output, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes
-
-def plot_capm_frontier(df_output, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes):
-    fig, ax = plt.subplots(figsize=(10, 6))
-    sc = ax.scatter(sim_risks, sim_returns, c=sim_sharpes, cmap='coolwarm', alpha=0.3, label='Simulated')
-    ax.plot(frontier_risks, target_returns, color='black', linewidth=2, label='Efficient Frontier')
-    ax.scatter(frontier_risks[max_idx], target_returns[max_idx], color='gold', s=100, edgecolor='black', label='Max Sharpe')
-    ax.set_title("Efficient Frontier with Monte Carlo Overlay")
-    ax.set_xlabel("Portfolio Risk")
-    ax.set_ylabel("Expected Return")
-    ax.xaxis.set_major_formatter(mtick.PercentFormatter(1.0))
-    ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
-    ax.legend()
-    plt.colorbar(sc, label="Sharpe Ratio")
-    fig.tight_layout()
-    return fig
-
-def write_capm_output(df_output):
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-        df_output.to_excel(writer, index=False, sheet_name="Efficient Frontier")
-    output.seek(0)
-    return output
-
-
 from PIL import Image
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -221,6 +130,7 @@ def render_forecasting_modeling():
         st.markdown("<br>", unsafe_allow_html=True)
         st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_overview")
 
+    else:
         label = st.session_state.scenario
         if label == "consensus":
             st.subheader("Consensus Economic Outlook")
@@ -307,11 +217,11 @@ def render_forecasting_modeling():
                 ax2.legend()
                 fig2.tight_layout()
                 st.pyplot(fig2)
+            else:
+                st.info("Please select up to 5 sectors to view comparison.")
 
             st.markdown("<br>", unsafe_allow_html=True)
             st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_compare")
-
-
 
 
 
@@ -319,63 +229,30 @@ def render_option(option_num):
     if option_num == "1":
         render_forecasting_modeling()
     elif option_num == "2":
-        if st.session_state.get("scenario") == "capm":
-            st.subheader("CAPM Optimizer")
-            uploaded_file = st.file_uploader("Upload CAPM Input File (capm_input.xlsx)", type=["xlsx"], key="capm_upload")
-            if uploaded_file:
-                try:
-                    sectors, exp_ret, vol, corr, wmin, wmax, rf = parse_capm_input(uploaded_file)
-                    df_result, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes = run_capm_optimizer(
-                        sectors, exp_ret, vol, corr, wmin, wmax, rf)
-                    fig = plot_capm_frontier(df_result, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes)
-                    st.pyplot(fig)
-                    st.markdown("### Optimized Frontier Table")
-                    st.dataframe(df_result.style.format({col: "{:.2%}" for col in df_result.columns if col != "Sharpe Ratio"}), use_container_width=True)
-                    output = write_capm_output(df_result)
-                    st.download_button("📥 Download CAPM Output", output, file_name="capm_output.xlsx", use_container_width=True)
-                except Exception as e:
-                    st.error(f"An error occurred: {e}")
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_capm")
-    elif option_num == "2":
-        if st.session_state.get("scenario") == "capm":
-            st.subheader("CAPM Optimizer")
-            uploaded_file = st.file_uploader("Upload CAPM Input File (capm_input.xlsx)", type=["xlsx"], key="capm_upload")
-            if uploaded_file:
-                try:
-                    sectors, exp_ret, vol, corr, wmin, wmax, rf = parse_capm_input(uploaded_file)
-                    df_result, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes = run_capm_optimizer(
-                        sectors, exp_ret, vol, corr, wmin, wmax, rf)
-                    fig = plot_capm_frontier(df_result, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes)
-                    st.pyplot(fig)
-                    st.markdown("### Optimized Frontier Table")
-                    st.dataframe(df_result.style.format({col: "{:.2%}" for col in df_result.columns if col != "Sharpe Ratio"}), use_container_width=True)
-                    output = write_capm_output(df_result)
-                    st.download_button("📥 Download CAPM Output", output, file_name="capm_output.xlsx", use_container_width=True)
-                except Exception as e:
-                    st.error(f"An error occurred: {e}")
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_capm")
-    elif option_num == "2":
-        scenario = st.session_state.get("scenario")
-        if scenario == "capm":
-            st.subheader("CAPM Optimizer")
-            uploaded_file = st.file_uploader("Upload CAPM Input File (capm_input.xlsx)", type=["xlsx"], key="capm_upload")
-            if uploaded_file:
-                try:
-                    sectors, exp_ret, vol, corr, wmin, wmax, rf = parse_capm_input(uploaded_file)
-                    df_result, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes = run_capm_optimizer(
-                        sectors, exp_ret, vol, corr, wmin, wmax, rf)
-                    fig = plot_capm_frontier(df_result, max_idx, frontier_risks, target_returns, sim_risks, sim_returns, sim_sharpes)
-                    st.pyplot(fig)
-                    st.markdown("### Optimized Frontier Table")
-                    st.dataframe(df_result.style.format({col: "{:.2%}" for col in df_result.columns if col != "Sharpe Ratio"}), use_container_width=True)
-                    output = write_capm_output(df_result)
-                    st.download_button("📥 Download CAPM Output", output, file_name="capm_output.xlsx", use_container_width=True)
-                except Exception as e:
-                    st.error(f"An error occurred: {e}")
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_capm")
+        st.title("Optimizer")
+        st.subheader("Choose a method to begin optimization:")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.button("CAPM", on_click=set_scenario, args=("capm",), key="btn_opt_capm", use_container_width=True)
+        with col2:
+            st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_opt_model", use_container_width=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
+    else:
+        option_labels = [
+            "Forecasting & Modeling",
+            "Optimizer",
+            "Fund & Deal Pipeline",
+            "Smart Benchmarks",
+            "Secondaries Marketplace",
+            "Market Research"
+        ]
+        st.title(option_labels[int(option_num)-1])
+        st.subheader("🚧 Under Construction 🚧")
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_option{option_num}")
 def landing_page():
     logo_path = BASE_DIR / "townsendAI_logo_1.png"
     if logo_path.exists():
@@ -421,13 +298,9 @@ def landing_page():
 def main():
     if st.session_state.page == "home":
         landing_page()
-    
+    elif st.session_state.page.startswith("option"):
+        option_num = st.session_state.page[-1]
+        render_option(option_num)
 
-
-
-# --- Main App Router ---
 if __name__ == "__main__":
-    if "page" not in st.session_state:
-        st.session_state.page = "home"
-    if st.session_state.page == "home":
-        landing_page()
+    main()
