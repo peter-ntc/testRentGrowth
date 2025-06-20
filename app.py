@@ -87,9 +87,45 @@ def render_forecasting_modeling():
     with col1:
         st.button("Comparison across scenarios", disabled=True, use_container_width=True)
     with col2:
-        st.image(str(BASE_DIR / "avg_gdp.png"), caption="Average GDP (2025–2030)", use_column_width=True)
-        st.image(str(BASE_DIR / "avg_inflation.png"), caption="Average Inflation (2025–2030)", use_column_width=True)
-        st.image(str(BASE_DIR / "avg_10yr.png"), caption="Average 10 YR (2025–2030)", use_column_width=True)
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        def render_bar_chart(title, data_dict):
+            fig, ax = plt.subplots(figsize=(5, 4))
+            labels = list(data_dict.keys())
+            values = [v * 100 for v in data_dict.values()]
+            ax.bar(labels, values)
+            ax.set_title(title)
+            ax.set_ylabel("Average (%)")
+            ax.set_ylim(0, max(values) * 1.2)
+            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.2f}%"))
+            st.pyplot(fig)
+
+        # Compute averages
+        def get_avg(df, label):
+            return df.loc[label].mean() if df is not None else 0.0
+
+        avg_gdp = {
+            "Consensus": get_avg(safe_load_df("BaseScenario.xlsx", "Consensus Economic Outlook"), "GDP"),
+            "High": get_avg(safe_load_df("HighScenario.xlsx", "Higher Growth & Inflation"), "GDP"),
+            "Low": get_avg(safe_load_df("LowScenario.xlsx", "Lower Growth & Inflation"), "GDP")
+        }
+
+        avg_inflation = {
+            "Consensus": get_avg(safe_load_df("BaseScenario.xlsx", "Consensus Economic Outlook"), "Inflation"),
+            "High": get_avg(safe_load_df("HighScenario.xlsx", "Higher Growth & Inflation"), "Inflation"),
+            "Low": get_avg(safe_load_df("LowScenario.xlsx", "Lower Growth & Inflation"), "Inflation")
+        }
+
+        avg_10yr = {
+            "Consensus": get_avg(safe_load_df("BaseScenario.xlsx", "Consensus Economic Outlook"), "10 YR"),
+            "High": get_avg(safe_load_df("HighScenario.xlsx", "Higher Growth & Inflation"), "10 YR"),
+            "Low": get_avg(safe_load_df("LowScenario.xlsx", "Lower Growth & Inflation"), "10 YR")
+        }
+
+        render_bar_chart("Average GDP (2025–2030)", avg_gdp)
+        render_bar_chart("Average Inflation (2025–2030)", avg_inflation)
+        render_bar_chart("Average 10 YR (2025–2030)", avg_10yr)
         col1, col2 = st.columns([1, 3])
         with col1:
             st.button(label, disabled=True, use_container_width=True)
