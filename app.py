@@ -322,6 +322,7 @@ def render_option(option_num):
     if option_num == "1":
         render_forecasting_modeling()
     elif option_num == "2":
+        if st.session_state.get("scenario") == "capm":
         st.subheader("CAPM Optimizer")
         uploaded_file = st.file_uploader("Upload CAPM Input File (capm_input.xlsx)", type=["xlsx"], key="capm_upload")
         if uploaded_file:
@@ -347,6 +348,7 @@ def render_option(option_num):
                 st.button("CAPM", on_click=set_scenario, args=("capm",), key="btn_opt_capm", use_container_width=True)
             with col2:
                 st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_opt_model", use_container_width=True)
+            st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("<br>", unsafe_allow_html=True)
             st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
     else:
