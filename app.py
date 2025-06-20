@@ -72,6 +72,24 @@ def render_forecasting_modeling():
     st.markdown("### Forecasting and Modeling supported for 3 economic scenarios.")
 
     if st.session_state.scenario is None:
+        col_left, col_right = st.columns([1, 3])
+        with col_left:
+            st.button("Consensus Economic Outlook", on_click=set_scenario, args=("consensus",), use_container_width=True)
+            st.button("Higher Growth & Inflation", on_click=set_scenario, args=("high",), use_container_width=True)
+            st.button("Lower Growth & Inflation", on_click=set_scenario, args=("low",), use_container_width=True)
+            st.button("Compare ALL 3 scenarios", on_click=set_scenario, args=("compare",), use_container_width=True)
+
+        with col_right:
+            df_base = safe_load_df("BaseScenario.xlsx", "Consensus Economic Outlook")
+            df_high = safe_load_df("HighScenario.xlsx", "Higher Growth & Inflation")
+            df_low = safe_load_df("LowScenario.xlsx", "Lower Growth & Inflation")
+
+            if df_base is not None:
+                plot_chart(df_base, "Consensus Economic Outlook")
+            if df_high is not None:
+                plot_chart(df_high, "Higher Growth & Inflation")
+            if df_low is not None:
+                plot_chart(df_low, "Lower Growth & Inflation")
         col1, col2 = st.columns(2)
         with col1:
             st.button("Consensus Economic Outlook", on_click=set_scenario, args=("consensus",), use_container_width=True)
