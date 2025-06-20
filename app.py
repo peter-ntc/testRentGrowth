@@ -75,7 +75,7 @@ def render_forecasting_modeling():
     for label, file in scenarios:
         col1, col2 = st.columns([1, 3])
         with col1:
-            st.button(label, disabled=True, use_container_width=True)
+            st.button(label, disabled=True, use_container_width=True, key=f"label_{label}")
         with col2:
             df = safe_load_df(file, label)
             if df is not None:
@@ -123,12 +123,32 @@ def render_forecasting_modeling():
             "Low": get_avg(safe_load_df("LowScenario.xlsx", "Lower Growth & Inflation"), "10 YR")
         }
 
-        render_bar_chart("Average GDP (2025–2030)", avg_gdp)
-        render_bar_chart("Average Inflation (2025–2030)", avg_inflation)
-        render_bar_chart("Average 10 YR (2025–2030)", avg_10yr)
+        # Combined grouped bar chart
+        import numpy as np
+        labels = ["Consensus", "High", "Low"]
+        gdp_vals = [avg_gdp[l] * 100 for l in labels]
+        inf_vals = [avg_inflation[l] * 100 for l in labels]
+        y10_vals = [avg_10yr[l] * 100 for l in labels]
+
+        x = np.arange(len(labels))
+        width = 0.25
+
+        fig, ax = plt.subplots(figsize=(7, 5))
+        ax.bar(x - width, gdp_vals, width, label="GDP")
+        ax.bar(x, inf_vals, width, label="Inflation")
+        ax.bar(x + width, y10_vals, width, label="10 YR")
+
+        ax.set_ylabel("Average (%)")
+        ax.set_title("Comparison of Average Metrics (2025–2030)")
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels)
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.2f}%"))
+        ax.legend()
+        fig.tight_layout()
+        st.pyplot(fig)
         col1, col2 = st.columns([1, 3])
         with col1:
-            st.button(label, disabled=True, use_container_width=True)
+            st.button(label, disabled=True, use_container_width=True, key=f"label_{label}")
         with col2:
             df = safe_load_df(file, label)
             if df is not None:
