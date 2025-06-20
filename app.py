@@ -104,6 +104,7 @@ if "page" not in st.session_state:
 if "scenario" not in st.session_state:
     st.session_state.scenario = None
 
+    pass
 def go_home():
     st.session_state.page = "home"
     st.session_state.scenario = None
@@ -441,6 +442,7 @@ def landing_page():
         with col:
             st.button(option_labels[i], on_click=set_page, args=(i+1,), key=f"btn_{i}")
 
+    pass
 def main():
     if st.session_state.page == "home":
         landing_page()
@@ -448,9 +450,19 @@ def main():
 
 
 
+    pass
 # --- Main App Router ---
 if __name__ == "__main__":
     if "page" not in st.session_state:
         st.session_state.page = "home"
     if st.session_state.page == "home":
         landing_page()
+
+
+# ---------------- CAPM Optimizer Placeholder ----------------
+def render_capm_optimizer():
+    import streamlit as st
+    st.subheader("📉 CAPM Optimizer")
+    st.info("🚧 This section is under construction. Please check back soon.")
+    st.markdown("---")
+    st.markdown("⬅️ [Return to Home](#)")
