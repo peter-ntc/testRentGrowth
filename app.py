@@ -72,7 +72,7 @@ def render_forecasting_modeling():
     st.markdown("### Forecasting and Modeling supported for 3 economic scenarios.")
 
     if st.session_state.scenario is None:
-        # Button + Chart Row 1
+        # Row 1
         row1_left, row1_right = st.columns([1, 3])
         with row1_left:
             st.button("Consensus Economic Outlook", on_click=set_scenario, args=("consensus",), key="btn_consensus", use_container_width=True)
@@ -81,7 +81,7 @@ def render_forecasting_modeling():
             if df_base is not None:
                 plot_chart(df_base, "Consensus Economic Outlook")
 
-        # Button + Chart Row 2
+        # Row 2
         row2_left, row2_right = st.columns([1, 3])
         with row2_left:
             st.button("Higher Growth & Inflation", on_click=set_scenario, args=("high",), key="btn_high", use_container_width=True)
@@ -90,7 +90,7 @@ def render_forecasting_modeling():
             if df_high is not None:
                 plot_chart(df_high, "Higher Growth & Inflation")
 
-        # Button + Chart Row 3
+        # Row 3
         row3_left, row3_right = st.columns([1, 3])
         with row3_left:
             st.button("Lower Growth & Inflation", on_click=set_scenario, args=("low",), key="btn_low", use_container_width=True)
@@ -99,13 +99,12 @@ def render_forecasting_modeling():
             if df_low is not None:
                 plot_chart(df_low, "Lower Growth & Inflation")
 
-        # Button Only Row 4
-        row4_left, row4_right = st.columns([1, 3])
+        # Row 4
+        row4_left, _ = st.columns([1, 3])
         with row4_left:
             st.button("Compare ALL 3 scenarios", on_click=set_scenario, args=("compare",), key="btn_compare", use_container_width=True)
-        with row4_right:
-            st.markdown("")
-    else:
+
+    elif st.session_state.scenario:
         label_map = {
             "consensus": "Consensus Economic Outlook",
             "high": "Higher Growth & Inflation",
