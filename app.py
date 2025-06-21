@@ -301,7 +301,6 @@ def landing_page():
 
 
 def render_capm():
-def render_capm():
     st.title("CAPM Optimizer")
     uploaded_file = st.file_uploader("Upload CAPM Input Excel File", type=["xlsx"], key="capm_upload")
     if uploaded_file is not None:
