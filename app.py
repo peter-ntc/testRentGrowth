@@ -311,8 +311,8 @@ def render_capm():
             import matplotlib.pyplot as plt
             from scipy.optimize import minimize
 
-            # Read expected return and volatility from rows 6–7 (Excel rows 7–8)
-            df_returns = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", skiprows=5, nrows=2, header=None)
+            # Read expected return and volatility from rows 4–5 (Excel rows 4 and 5)
+            df_returns = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", skiprows=3, nrows=2, header=None)
             df_returns.index = ["Expected Return", "Volatility"]
 
             # Sector names from B8:O8
