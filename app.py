@@ -410,6 +410,10 @@ def render_capm():
 
             fig, ax = plt.subplots(figsize=(10,6))
             scatter = ax.scatter(results[1,:], results[0,:], c=results[2,:], cmap='viridis', alpha=0.3)
+            # Add this if you want to plot the efficient frontier as a smooth line
+            frontier_volatilities, frontier_returns = simulate_efficient_frontier(mean_returns, cov_matrix, bounds, constraints)
+            ax.plot(frontier_volatilities, frontier_returns, color='blue', linewidth=2, label='Efficient Frontier')
+
             ax.scatter(opt_std, opt_return, marker='*', color='r', s=100, label='Max Sharpe Ratio')
             ax.set_title('Efficient Frontier')
             ax.set_xlabel('Volatility')
