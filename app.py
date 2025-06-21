@@ -1,4 +1,3 @@
-
 import streamlit as st
 from PIL import Image
 import pandas as pd
@@ -357,32 +356,32 @@ def render_capm():
 
             def negative_sharpe(weights, mean_returns, cov_matrix, risk_free_rate=0.0):
 
-def simulate_efficient_frontier(mean_returns, cov_matrix, bounds, constraints, num_portfolios=50):
-    frontier_returns = []
-    frontier_volatilities = []
+                def simulate_efficient_frontier(mean_returns, cov_matrix, bounds, constraints, num_portfolios=50):
+                    frontier_returns = []
+                    frontier_volatilities = []
 
-    target_returns = np.linspace(min(mean_returns), max(mean_returns), num_portfolios)
+                    target_returns = np.linspace(min(mean_returns), max(mean_returns), num_portfolios)
 
-    for ret in target_returns:
-        new_constraints = (
-            {'type': 'eq', 'fun': lambda x: np.sum(x) - 1},
-            {'type': 'eq', 'fun': lambda x: np.dot(x, mean_returns) - ret}
-        )
-        try:
-            res = minimize(portfolio_volatility,
-                           initial_weights,
-                           args=(cov_matrix,),
-                           method='SLSQP',
-                           bounds=bounds,
-                           constraints=new_constraints)
-            if res.success:
-                std = np.sqrt(np.dot(res.x.T, np.dot(cov_matrix, res.x)))
-                frontier_returns.append(ret)
-                frontier_volatilities.append(std)
-        except:
-            continue
+                    for ret in target_returns:
+                        new_constraints = (
+                            {'type': 'eq', 'fun': lambda x: np.sum(x) - 1},
+                            {'type': 'eq', 'fun': lambda x: np.dot(x, mean_returns) - ret}
+                        )
+                        try:
+                            res = minimize(portfolio_volatility,
+                                           initial_weights,
+                                           args=(cov_matrix,),
+                                           method='SLSQP',
+                                           bounds=bounds,
+                                           constraints=new_constraints)
+                            if res.success:
+                                std = np.sqrt(np.dot(res.x.T, np.dot(cov_matrix, res.x)))
+                                frontier_returns.append(ret)
+                                frontier_volatilities.append(std)
+                        except:
+                            continue
 
-    return frontier_volatilities, frontier_returns
+                    return frontier_volatilities, frontier_returns
 
                 p_return, p_std = portfolio_performance(weights, mean_returns, cov_matrix)
                 return -(p_return - risk_free_rate) / p_std
