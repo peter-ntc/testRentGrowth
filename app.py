@@ -313,7 +313,7 @@ def render_capm():
 
             df_returns = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", nrows=2)
             df_returns.index = ["Expected Return", "Volatility"]
-            sectors = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", nrows=1, header=None).values.flatten()
+            sectors = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", skiprows=7, nrows=1, header=None).values.flatten().tolist()
             df_returns.columns = sectors
 
             df_corr = pd.read_excel(uploaded_file, sheet_name=0, skiprows=7, usecols="B:O", nrows=14, header=None)
