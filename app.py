@@ -330,6 +330,14 @@ def render_capm():
             df_returns = df_returns.apply(pd.to_numeric, errors="coerce")
             df_corr = df_corr.apply(pd.to_numeric, errors="coerce")
 
+            # Read min and max weights from Excel (rows 25–26)
+            min_weights = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", skiprows=24, nrows=1, header=None).values.flatten().tolist()
+            max_weights = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", skiprows=25, nrows=1, header=None).values.flatten().tolist()
+
+            # Zip them into a tuple list for optimizer
+            bounds = list(zip(min_weights, max_weights))
+
+
             # Optional: Check for missing or invalid values
             if df_corr.isnull().values.any() or df_returns.isnull().values.any():
                 st.error("Input file contains missing or non-numeric values. Please verify the Excel format.")
@@ -352,7 +360,6 @@ def render_capm():
                 return -(p_return - risk_free_rate) / p_std
 
             num_assets = len(sectors)
-            bounds = tuple((0, 1) for _ in range(num_assets))
             constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
             initial_weights = num_assets * [1. / num_assets,]
 
