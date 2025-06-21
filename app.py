@@ -415,6 +415,39 @@ def render_capm():
             frontier_volatilities, frontier_returns = simulate_efficient_frontier(mean_returns, cov_matrix, bounds, constraints)
             ax.plot(frontier_volatilities, frontier_returns, color='blue', linewidth=2, label='Efficient Frontier')
 
+            # Display frontier portfolios table
+            frontier_data = []
+            target_returns = np.linspace(min(mean_returns), max(mean_returns), len(frontier_returns))
+
+            for i, ret in enumerate(target_returns):
+                new_constraints = (
+                    {'type': 'eq', 'fun': lambda x: np.sum(x) - 1},
+                    {'type': 'eq', 'fun': lambda x: np.dot(x, mean_returns) - ret}
+                )
+                res = minimize(portfolio_volatility,
+                               initial_weights,
+                               args=(cov_matrix,),
+                               method='SLSQP',
+                               bounds=bounds,
+                               constraints=new_constraints)
+                if res.success:
+                    w = res.x
+                    p_ret, p_std = portfolio_performance(w, mean_returns, cov_matrix)
+                    sharpe = (p_ret) / p_std
+                    frontier_data.append([p_ret, p_std, sharpe] + list(w))
+
+            # Create and show dataframe
+            columns = ["Return", "Volatility", "Sharpe"] + sectors
+            frontier_df = pd.DataFrame(frontier_data, columns=columns)
+            frontier_df_display = frontier_df.copy()
+            frontier_df_display[["Return", "Volatility", "Sharpe"]] = frontier_df_display[["Return", "Volatility", "Sharpe"]].applymap(lambda x: f"{x:.2%}")
+            for col in sectors:
+                frontier_df_display[col] = frontier_df_display[col].map(lambda x: f"{x:.2%}")
+
+            st.markdown("### Portfolios on Efficient Frontier")
+            st.dataframe(frontier_df_display, use_container_width=True)
+
+
             ax.scatter(opt_std, opt_return, marker='*', color='r', s=100, label='Max Sharpe Ratio')
             ax.set_title('Efficient Frontier')
             ax.set_xlabel('Volatility')
