@@ -311,14 +311,31 @@ def render_capm():
             import matplotlib.pyplot as plt
             from scipy.optimize import minimize
 
-            df_returns = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", nrows=2)
+            # Read expected return and volatility from rows 6–7 (Excel rows 7–8)
+            df_returns = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", skiprows=5, nrows=2, header=None)
             df_returns.index = ["Expected Return", "Volatility"]
+
+            # Sector names from B8:O8
             sectors = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", skiprows=7, nrows=1, header=None).values.flatten().tolist()
             df_returns.columns = sectors
 
-            df_corr = pd.read_excel(uploaded_file, sheet_name=0, skiprows=7, usecols="B:O", nrows=14, header=None)
+            # Correlation matrix B9:O22 and labels from A9:A22
+            row_labels = pd.read_excel(uploaded_file, sheet_name=0, usecols="A", skiprows=8, nrows=14, header=None).values.flatten().tolist()
+            df_corr = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", skiprows=8, nrows=14, header=None)
+
             df_corr.columns = sectors
-            df_corr.index = sectors
+            df_corr.index = row_labels
+
+            # Ensure numeric
+            df_returns = df_returns.apply(pd.to_numeric, errors="coerce")
+            df_corr = df_corr.apply(pd.to_numeric, errors="coerce")
+
+            # Optional: Check for missing or invalid values
+            if df_corr.isnull().values.any() or df_returns.isnull().values.any():
+                st.error("Input file contains missing or non-numeric values. Please verify the Excel format.")
+                return
+
+
 
             mean_returns = df_returns.loc["Expected Return"]
             volatilities = df_returns.loc["Volatility"]
