@@ -19,7 +19,7 @@ if uploaded_file:
     cor_matrix = sheet.loc[8:23, 1:16].astype(float).values
     min_weights = sheet.loc[109, 1:16].astype(float).values
     max_weights = sheet.loc[110, 1:16].astype(float).values
-    risk_free_rate = float(sheet.loc[35, 1])
+    risk_free_rate = float(sheet.loc[112, 1])
 
 
     # Covariance matrix
