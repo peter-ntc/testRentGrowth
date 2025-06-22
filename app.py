@@ -309,6 +309,10 @@ def render_capm():
     from scipy.optimize import minimize
 
     # UI: Title and file upload
+    if st.button("Back to Home"):
+        st.session_state.page = "home"
+        st.rerun()
+
     st.title("Portfolio Optimizer with Efficient Frontier")
     uploaded_file = st.file_uploader("Upload your Excel file (e.g., capm_input.xlsx)", type=["xlsx"])
 
