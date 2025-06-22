@@ -13,13 +13,14 @@ if uploaded_file:
     sheet = pd.read_excel(uploaded_file, header=None)
 
     # Extract inputs
-    sectors = sheet.loc[2, 1:15].values
-    expected_returns = sheet.loc[3, 1:15].astype(float).values
-    volatility = sheet.loc[4, 1:15].astype(float).values
-    cor_matrix = sheet.loc[8:21, 1:15].astype(float).values
-    min_weights = sheet.loc[109, 1:15].astype(float).values  # updated from row 110
-    max_weights = sheet.loc[110, 1:15].astype(float).values  # updated from row 111
+    sectors = sheet.loc[2, 1:16].values
+    expected_returns = sheet.loc[3, 1:16].astype(float).values
+    volatility = sheet.loc[4, 1:16].astype(float).values
+    cor_matrix = sheet.loc[8:22, 1:16].astype(float).values
+    min_weights = sheet.loc[109, 1:16].astype(float).values
+    max_weights = sheet.loc[110, 1:16].astype(float).values
     risk_free_rate = float(sheet.loc[35, 1])
+
 
     # Covariance matrix
     i_lower = np.tril_indices_from(cor_matrix, -1)
