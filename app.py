@@ -301,7 +301,6 @@ def landing_page():
 
 
 def render_capm():
-def render_capm():
     st.title("CAPM Optimizer")
     uploaded_file = st.file_uploader("Upload CAPM Input Excel File", type=["xlsx"], key="capm_upload")
     if uploaded_file is not None:
@@ -312,14 +311,39 @@ def render_capm():
             import matplotlib.pyplot as plt
             from scipy.optimize import minimize
 
-            df_returns = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", nrows=2)
+            # Read expected return and volatility from rows 4–5 (Excel rows 4 and 5)
+            df_returns = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", skiprows=3, nrows=2, header=None)
             df_returns.index = ["Expected Return", "Volatility"]
-            sectors = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", nrows=1, header=None).values.flatten()
+
+            # Sector names from B8:O8
+            sectors = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", skiprows=7, nrows=1, header=None).values.flatten().tolist()
             df_returns.columns = sectors
 
-            df_corr = pd.read_excel(uploaded_file, sheet_name=0, skiprows=7, usecols="B:O", nrows=14, header=None)
+            # Correlation matrix B9:O22 and labels from A9:A22
+            row_labels = pd.read_excel(uploaded_file, sheet_name=0, usecols="A", skiprows=8, nrows=14, header=None).values.flatten().tolist()
+            df_corr = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", skiprows=8, nrows=14, header=None)
+
             df_corr.columns = sectors
-            df_corr.index = sectors
+            df_corr.index = row_labels
+
+            # Ensure numeric
+            df_returns = df_returns.apply(pd.to_numeric, errors="coerce")
+            df_corr = df_corr.apply(pd.to_numeric, errors="coerce")
+
+            # Read min and max weights from Excel (rows 25–26)
+            min_weights = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", skiprows=24, nrows=1, header=None).values.flatten().tolist()
+            max_weights = pd.read_excel(uploaded_file, sheet_name=0, usecols="B:O", skiprows=25, nrows=1, header=None).values.flatten().tolist()
+
+            # Zip them into a tuple list for optimizer
+            bounds = list(zip(min_weights, max_weights))
+
+
+            # Optional: Check for missing or invalid values
+            if df_corr.isnull().values.any() or df_returns.isnull().values.any():
+                st.error("Input file contains missing or non-numeric values. Please verify the Excel format.")
+                return
+
+
 
             mean_returns = df_returns.loc["Expected Return"]
             volatilities = df_returns.loc["Volatility"]
@@ -336,7 +360,6 @@ def render_capm():
                 return -(p_return - risk_free_rate) / p_std
 
             num_assets = len(sectors)
-            bounds = tuple((0, 1) for _ in range(num_assets))
             constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
             initial_weights = num_assets * [1. / num_assets,]
 
