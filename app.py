@@ -16,7 +16,7 @@ if uploaded_file:
     sectors = sheet.loc[2, 1:16].values
     expected_returns = sheet.loc[3, 1:16].astype(float).values
     volatility = sheet.loc[4, 1:16].astype(float).values
-    cor_matrix = sheet.loc[8:23, 1:17].astype(float).values
+    cor_matrix = sheet.loc[8:23, 1:16].astype(float).values
     min_weights = sheet.loc[109, 1:16].astype(float).values
     max_weights = sheet.loc[110, 1:16].astype(float).values
     risk_free_rate = float(sheet.loc[35, 1])
