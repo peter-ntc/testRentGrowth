@@ -10,7 +10,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import numbers
 
 # Load input Excel file
-input_path = "capm input.xlsx"
+input_path = "capm_input.xlsx"
 sheet = pd.read_excel(input_path, header=None)
 
 # Extract inputs
