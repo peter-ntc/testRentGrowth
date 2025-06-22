@@ -1,111 +1,70 @@
+
 import streamlit as st
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mtick
-from scipy.optimize import minimize
+from openpyxl import load_workbook
 
-# UI: Title and file upload
-st.title("Portfolio Optimizer with Efficient Frontier")
-uploaded_file = st.file_uploader("Upload your Excel file (e.g., sector_input.xlsx)", type=["xlsx"])
+# File upload
+st.title("Efficient Frontier Optimizer")
+uploaded_file = st.file_uploader("Upload sector_input.xlsx", type=["xlsx"])
 
-if uploaded_file:
-    sheet = pd.read_excel(uploaded_file, header=None)
+if uploaded_file is not None:
+    # Load Excel using openpyxl
+    wb = load_workbook(uploaded_file, data_only=True)
+    ws = wb.active
 
-    # Extract inputs
-    sectors = sheet.loc[2, 1:16].values
-    expected_returns = sheet.loc[3, 1:16].astype(float).values
-    volatility = sheet.loc[4, 1:16].astype(float).values
-    cor_matrix = sheet.loc[8:23, 1:16].astype(float).values
-    min_weights = sheet.loc[109, 1:16].astype(float).values
-    max_weights = sheet.loc[110, 1:16].astype(float).values
-    risk_free_rate = float(sheet.loc[112, 1])
+    def read_row(row_num, start_col, end_col):
+        return [ws.cell(row=row_num, column=col).value for col in range(start_col, end_col + 1)]
 
+    # Read inputs
+    sectors = read_row(3, 2, 17)
+    expected_returns = np.array(read_row(4, 2, 17), dtype=float)
+    volatility = np.array(read_row(5, 2, 17), dtype=float)
+    cor_matrix = np.array([read_row(r, 2, 17) for r in range(9, 25)], dtype=float)
+    min_weights = np.array(read_row(110, 2, 17), dtype=float)
+    max_weights = np.array(read_row(111, 2, 17), dtype=float)
+    risk_free_rate = ws["B113"].value or 0.0
 
-    # Covariance matrix
-    i_lower = np.tril_indices_from(cor_matrix, -1)
-    cor_matrix[i_lower[::-1]] = cor_matrix[i_lower]
+    # Calculate covariance matrix
     D = np.diag(volatility)
     cov_matrix = D @ cor_matrix @ D
 
-    # Efficient Frontier
-    num_assets = len(expected_returns)
-    num_points = 50
-    target_returns = np.linspace(min(expected_returns), max(expected_returns), num_points)
-    frontier_risks = []
-    frontier_weights = []
+    # Portfolio simulation
+    num_portfolios = 10000
+    results = np.zeros((4 + len(sectors), num_portfolios))
+    for i in range(num_portfolios):
+        weights = np.random.uniform(size=len(sectors))
+        weights = weights / np.sum(weights)
+        if np.any(weights < min_weights) or np.any(weights > max_weights):
+            continue
+        port_return = np.dot(weights, expected_returns)
+        port_stddev = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
+        sharpe_ratio = (port_return - risk_free_rate) / port_stddev if port_stddev != 0 else 0
+        results[0,i] = port_return
+        results[1,i] = port_stddev
+        results[2,i] = sharpe_ratio
+        results[3:,i] = weights
 
-    for target in target_returns:
-        constraints = [
-            {'type': 'eq', 'fun': lambda w: np.sum(w) - 1},
-            {'type': 'eq', 'fun': lambda w: w @ expected_returns - target}
-        ]
-        bounds = tuple(zip(min_weights, max_weights))
-        init_guess = np.repeat(1 / num_assets, num_assets)
+    results_df = pd.DataFrame(results.T, columns=["Return", "Risk", "Sharpe"] + sectors)
+    max_sharpe_port = results_df.iloc[results_df["Sharpe"].idxmax()]
+    min_risk_port = results_df.iloc[results_df["Risk"].idxmin()]
 
-        result = minimize(lambda w: w.T @ cov_matrix @ w, init_guess, method='SLSQP', bounds=bounds, constraints=constraints)
+    st.subheader("Max Sharpe Portfolio Allocation")
+    st.dataframe(max_sharpe_port[3:].apply(lambda x: f"{x:.2%}"))
 
-        if result.success:
-            frontier_risks.append(np.sqrt(result.fun))
-            frontier_weights.append(result.x)
-        else:
-            frontier_risks.append(np.nan)
-            frontier_weights.append([np.nan] * num_assets)
+    st.subheader("Min Risk Portfolio Allocation")
+    st.dataframe(min_risk_port[3:].apply(lambda x: f"{x:.2%}"))
 
-    # Sharpe Ratios
-    target_returns = np.array(target_returns)
-    frontier_risks = np.array(frontier_risks)
-    sharpe_ratios = (target_returns - risk_free_rate) / frontier_risks
-    max_idx = np.nanargmax(sharpe_ratios)
-
-    df_output = pd.DataFrame(frontier_weights, columns=sectors)
-    df_output.insert(0, "Expected Return", target_returns)
-    df_output.insert(1, "Portfolio Risk", frontier_risks)
-    df_output["Sharpe Ratio"] = sharpe_ratios
-
-    st.subheader("Efficient Portfolios Table")
-    st.dataframe(df_output.style.format("{:.2%}"))
-
-    # Monte Carlo Simulation
-    sim_weights = np.random.dirichlet(np.ones(num_assets), size=10000)
-    sim_returns = sim_weights @ expected_returns
-    sim_risks = np.sqrt(np.einsum('ij,jk,ik->i', sim_weights, cov_matrix, sim_weights))
-    sim_sharpes = (sim_returns - risk_free_rate) / sim_risks
-
-    # Plot: Efficient Frontier with Monte Carlo
-    fig1, ax1 = plt.subplots(figsize=(10, 6))
-    sc = ax1.scatter(sim_risks, sim_returns, c=sim_sharpes, cmap='coolwarm', alpha=0.3)
-    ax1.plot(frontier_risks, target_returns, color='black', linewidth=2, label='Efficient Frontier')
-    ax1.scatter(frontier_risks[max_idx], target_returns[max_idx], color='gold', s=100, edgecolor='black', label='Max Sharpe')
-    ax1.set_title("Efficient Frontier with Monte Carlo Overlay")
-    ax1.set_xlabel("Portfolio Risk")
+    # Plot Efficient Frontier
+    fig1, ax1 = plt.subplots()
+    scatter = ax1.scatter(results_df["Risk"], results_df["Return"], c=results_df["Sharpe"], cmap='viridis', alpha=0.7)
+    ax1.scatter(max_sharpe_port["Risk"], max_sharpe_port["Return"], c='red', marker='*', s=200, label='Max Sharpe')
+    ax1.scatter(min_risk_port["Risk"], min_risk_port["Return"], c='blue', marker='X', s=100, label='Min Risk')
+    ax1.set_xlabel("Volatility (Risk)")
     ax1.set_ylabel("Expected Return")
-    ax1.xaxis.set_major_formatter(mtick.PercentFormatter(1.0))
-    ax1.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
+    ax1.set_title("Efficient Frontier with Monte Carlo Simulation")
     ax1.legend()
-    fig1.tight_layout()
+    ax1.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:.2%}"))
+    ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f"{y:.2%}"))
     st.pyplot(fig1)
-
-    # Plot: Sector Weight Allocation
-    fig2, (ax2a, ax2b) = plt.subplots(2, 1, figsize=(10, 10), gridspec_kw={'height_ratios': [2, 3]})
-    ax2a.plot(frontier_risks, target_returns, marker='o', color='black', label="Efficient Frontier")
-    ax2a.set_title('Efficient Frontier with Sector Mix')
-    ax2a.set_xlabel('Portfolio Risk')
-    ax2a.set_ylabel('Expected Return')
-    ax2a.xaxis.set_major_formatter(mtick.PercentFormatter(1.0))
-    ax2a.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
-    ax2a.grid(True)
-    ax2a.legend()
-
-    weights_array = np.array(frontier_weights)
-    ax2b.stackplot(target_returns, weights_array.T, labels=sectors)
-    ax2b.set_title("Sector Weight Allocation Across the Efficient Frontier")
-    ax2b.set_xlabel("Expected Return")
-    ax2b.set_ylabel("Weight")
-    ax2b.set_ylim(0, 1)
-    ax2b.xaxis.set_major_formatter(mtick.PercentFormatter(1.0))
-    ax2b.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
-    ax2b.grid(True)
-    ax2b.legend(loc='upper left', bbox_to_anchor=(1, 1))
-    fig2.tight_layout()
-    st.pyplot(fig2)
