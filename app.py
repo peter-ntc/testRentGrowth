@@ -8,7 +8,7 @@ from scipy.optimize import minimize
 
 # UI: Title and file upload
 st.title("Portfolio Optimizer with Efficient Frontier")
-uploaded_file = st.file_uploader("Upload your Excel file (e.g., capm_input.xlsx)", type=["xlsx"])
+uploaded_file = st.file_uploader("Upload your Excel file (e.g., sector_input.xlsx)", type=["xlsx"])
 
 if uploaded_file:
     sheet = pd.read_excel(uploaded_file, header=None)
@@ -18,8 +18,8 @@ if uploaded_file:
     expected_returns = sheet.loc[3, 1:15].astype(float).values
     volatility = sheet.loc[4, 1:15].astype(float).values
     cor_matrix = sheet.loc[8:21, 1:14].astype(float).values
-    min_weights = sheet.loc[24, 1:15].astype(float).values
-    max_weights = sheet.loc[25, 1:15].astype(float).values
+    min_weights = sheet.loc[109, 1:15].astype(float).values  # updated from row 110
+    max_weights = sheet.loc[110, 1:15].astype(float).values  # updated from row 111
     risk_free_rate = float(sheet.loc[35, 1])
 
     # Covariance matrix
