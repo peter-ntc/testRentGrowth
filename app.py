@@ -10,7 +10,7 @@ st.title("Portfolio Optimizer with Efficient Frontier")
 uploaded_file = st.file_uploader("Upload your Excel file (e.g., sector_input.xlsx)", type=["xlsx"])
 
 if uploaded_file:
-    sheet = pd.read_excel(uploaded_file, header=None, skip_blank_lines=False)
+    sheet = pd.read_excel(uploaded_file, header=None)
 
     # Extract inputs
     sectors = sheet.loc[2, 1:16].values
