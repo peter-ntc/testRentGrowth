@@ -230,7 +230,7 @@ def render_option(option_num):
         if st.session_state.scenario == "capm":
             render_capm()
         elif st.session_state.scenario == "model_portfolio":
-        render_model_portfolio()
+            render_model_portfolio()
         else:
             st.title("Optimizer")
             st.subheader("Choose a method to begin optimization:")
