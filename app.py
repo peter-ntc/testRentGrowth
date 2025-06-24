@@ -231,8 +231,7 @@ def render_option(option_num):
         if st.session_state.scenario == "capm":
             render_capm()
         elif st.session_state.scenario == "model_portfolio":
-            st.subheader("🚧 Model Portfolio Module is Under Construction 🚧")
-            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_model_portfolio")
+            render_model_portfolio()
         else:
             st.title("Optimizer")
             st.subheader("Choose a method to begin optimization:")
@@ -415,6 +414,13 @@ def render_capm():
         ax2b.legend(loc='upper left', bbox_to_anchor=(1, 1))
         fig2.tight_layout()
         st.pyplot(fig2)
+def render_model_portfolio():
+    st.title("Model Portfolio")
+    st.subheader("🚧 Model Portfolio Module is Under Construction 🚧")
+    if st.button("🔙 Return to Home", use_container_width=True, key="btn_model_home"):
+        st.session_state.page = "home"
+        st.rerun()
+
 def main():
     if st.session_state.page == "home":
         landing_page()
