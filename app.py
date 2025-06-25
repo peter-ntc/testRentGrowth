@@ -249,19 +249,17 @@ def render_option(option_num):
         render_fund_pipeline()
 
     elif option_num == "4":
-        st.title("Smart Benchmarks")
-        st.subheader("🚧 Under Construction 🚧")
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_option4_unique")
+        render_smart_benchmarks()
 
     elif option_num == "5":
         st.title("Secondaries Marketplace")
         st.subheader("🚧 Under Construction 🚧")
         st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_option5_unique")
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_option5")
 
     elif option_num == "6":
         render_market_research()
+
 
 
 def landing_page():
@@ -639,6 +637,37 @@ def render_market_research():
 
     # Return to Home button
     st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_market_research")
+
+
+def render_smart_benchmarks():
+    st.title("Smart Benchmarks")
+
+    benchmarks = [
+        ("Townsend / ODCE", ""),
+        ("Townsend Majors", "(True Market)"),
+        ("Townsend Expanded Market", "(All Stocks)"),
+        ("Townsend Minors", "(Small Cap / Mid Cap)"),
+        ("Townsend Sector Specific", "(Property Sector Focused Indices)"),
+        ("Townsend Global Property Index", ""),
+        ("Townsend EMEA Property Index", ""),
+        ("Townsend APAC Property Index", ""),
+        ("Townsend Global Infrastructure Index", "(New Index)"),
+        ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
+    ]
+
+    for label, note in benchmarks:
+        st.markdown(
+            f"""
+            <div style="border: 1px solid #ccc; border-radius: 10px; padding: 10px; margin-bottom: 10px;">
+                <strong>{label}</strong><br>
+                <span style="font-size: 0.85em; color: #666;">{note}</span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
 
 
 
