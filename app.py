@@ -559,29 +559,36 @@ def render_fund_pipeline():
             df['Co-Invest Equity'] = pd.to_numeric(df['Co-Invest Equity'], errors='coerce')
 
             st.success("File uploaded successfully!")
-
             st.subheader("Build Your Query")
 
             prop_type = st.text_input("Property Type contains (e.g., Residential)", "")
             is_entity = st.radio("Entity Invest.", ["Any", "Yes", "No"], index=0, horizontal=True)
             is_strategic = st.radio("Strategic", ["Any", "Yes", "No"], index=0, horizontal=True)
             is_synd = st.radio("Synd.", ["Any", "Yes", "No"], index=0, horizontal=True)
-            coinv_min, coinv_max = float(df["Co-Invest Equity"].min(skipna=True)), float(df["Co-Invest Equity"].max(skipna=True))
-            coinv_range = st.slider("Co-Invest Equity ($)", int(coinv_min), int(coinv_max), (int(coinv_min), int(coinv_max)))
 
-elif option_num == "3":
-    render_fund_pipeline()
-elif option_num in ["4", "5", "6"]:
-    option_labels = [
-        "Smart Benchmarks",
-        "Secondaries Marketplace",
-        "Market Research"
-    ]
-    idx = int(option_num) - 4
-    st.title(option_labels[idx])
-    st.subheader("🚧 Under Construction 🚧")
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_option{option_num}")
+            coinv_min, coinv_max = int(df["Co-Invest Equity"].min(skipna=True)), int(df["Co-Invest Equity"].max(skipna=True))
+            irr_min, irr_max = float(df["Gross IRR"].min(skipna=True)), float(df["Gross IRR"].max(skipna=True))
+            em_min, em_max = float(df["Gross EM"].min(skipna=True)), float(df["Gross EM"].max(skipna=True))
+
+            coinv_range = st.slider("Co-Invest Equity ($)", coinv_min, coinv_max, (coinv_min, coinv_max))
+            irr_range = st.slider("Gross IRR (%)", round(irr_min, 2), round(irr_max, 2), (round(irr_min, 2), round(irr_max, 2)))
+            em_range = st.slider("Gross EM (x)", round(em_min, 2), round(em_max, 2), (round(em_min, 2), round(em_max, 2)))
+
+            if st.button("🔍 Search", use_container_width=True):
+                filtered_df = df.copy()
+
+                if prop_type:
+                    filtered_df = filtered_df[filtered_df["Property Type"].fillna("").str.contains(prop_type, case=False)]
+
+                if is_entity != "Any":
+                    val = "Yes" if is_entity == "Yes" else "No"
+                    filtered_df = filtered_df[filtered_df["Entity Invest."].fillna("").str.lower() == val.lower()]
+
+                if is_strategic != "Any":
+                    val = "Yes" if is_strategic == "Yes" else "No"
+                    filtered_df = filtered_df[filtered_df["Strategic"].fillna("").str.lower() == val.lower()]
+
+                if is_synd != "Any":
                     val = "Yes" if is_synd == "Yes" else "No"
                     filtered_df = filtered_df[filtered_df["Synd."].fillna("").str.lower() == val.lower()]
 
@@ -598,11 +605,12 @@ elif option_num in ["4", "5", "6"]:
                 st.subheader("Filtered Results")
                 st.dataframe(filtered_df, use_container_width=True)
 
-            if st.button("← Return to Home"):
-                st.session_state.page = "Home"
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
 
         except Exception as e:
             st.error(f"Failed to process file: {e}")
+
 
 def main():
     if st.session_state.page == "home":
