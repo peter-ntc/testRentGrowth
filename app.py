@@ -611,6 +611,10 @@ def render_fund_pipeline():
         except Exception as e:
             st.error(f"Failed to process file: {e}")
 
+    col4, col5, col6 = st.columns(3)
+    for i, col in enumerate([col4, col5, col6], start=3):
+        with col:
+            st.button(option_labels[i], on_click=set_page, args=(i+1,), key=f"btn_{i}")
 
     def landing_page():
         logo_path = BASE_DIR / "townsendAI_logo_1.png"
@@ -648,12 +652,6 @@ def render_fund_pipeline():
     for i, col in enumerate([col1, col2, col3], start=0):
         with col:
             st.button(option_labels[i], on_click=set_page, args=(i+1,), key=f"btn_{i}")
-
-    col4, col5, col6 = st.columns(3)
-    for i, col in enumerate([col4, col5, col6], start=3):
-        with col:
-            st.button(option_labels[i], on_click=set_page, args=(i+1,), key=f"btn_{i}")
-
 
 def main():
     if st.session_state.page == "home":
