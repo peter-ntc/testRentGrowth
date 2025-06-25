@@ -616,42 +616,42 @@ def render_fund_pipeline():
         with col:
             st.button(option_labels[i], on_click=set_page, args=(i+1,), key=f"btn_{i}")
 
-    def landing_page():
-        logo_path = BASE_DIR / "townsendAI_logo_1.png"
-        if logo_path.exists():
-            logo = Image.open(logo_path)
-            colA, colB, colC = st.columns([1, 2, 1])
-            with colB:
-                st.image(logo, width=250)
+def landing_page():
+    logo_path = BASE_DIR / "townsendAI_logo_1.png"
+    if logo_path.exists():
+        logo = Image.open(logo_path)
+        colA, colB, colC = st.columns([1, 2, 1])
+        with colB:
+            st.image(logo, width=250)
 
-    st.title("TownsendAI")
-    st.write("Welcome to the MVP. Please select an option:")
+st.title("TownsendAI")
+st.write("Welcome to the MVP. Please select an option:")
 
-    st.markdown("""
-    <style>
-    div.stButton > button {
-        width: 100%;
-        height: 100px;
-        font-size: 18px;
-        border-radius: 10px;
-        white-space: normal;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+st.markdown("""
+<style>
+div.stButton > button {
+    width: 100%;
+    height: 100px;
+    font-size: 18px;
+    border-radius: 10px;
+    white-space: normal;
+}
+</style>
+""", unsafe_allow_html=True)
 
-    option_labels = [
-        "Forecasting & Modeling",
-        "Optimizer",
-        "Fund & Deal Pipeline",
-        "Smart Benchmarks",
-        "Secondaries Marketplace",
-        "Market Research"
-    ]
+option_labels = [
+    "Forecasting & Modeling",
+    "Optimizer",
+    "Fund & Deal Pipeline",
+    "Smart Benchmarks",
+    "Secondaries Marketplace",
+    "Market Research"
+]
 
-    col1, col2, col3 = st.columns(3)
-    for i, col in enumerate([col1, col2, col3], start=0):
-        with col:
-            st.button(option_labels[i], on_click=set_page, args=(i+1,), key=f"btn_{i}")
+col1, col2, col3 = st.columns(3)
+for i, col in enumerate([col1, col2, col3], start=0):
+    with col:
+        st.button(option_labels[i], on_click=set_page, args=(i+1,), key=f"btn_{i}")
 
 def main():
     if st.session_state.page == "home":
