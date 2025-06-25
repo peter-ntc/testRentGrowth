@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
+import streamlit.components.v1 as components
 
 BASE_DIR = Path(__file__).parent
 
@@ -227,6 +228,7 @@ def render_forecasting_modeling():
 def render_option(option_num):
     if option_num == "1":
         render_forecasting_modeling()
+
     elif option_num == "2":
         if st.session_state.scenario == "capm":
             render_capm()
@@ -242,22 +244,25 @@ def render_option(option_num):
                 st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_opt_model", use_container_width=True)
             st.markdown("<br>", unsafe_allow_html=True)
             st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
+
     elif option_num == "3":
         render_fund_pipeline()
-    elif option_num in ["4", "5", "6"]:
-        option_labels = [
-            "Smart Benchmarks",
-            "Secondaries Marketplace",
-            "Market Research"
-        ]
-        idx = int(option_num) - 4
-        st.title(option_labels[idx])
+
+    elif option_num == "4":
+        st.title("Smart Benchmarks")
         st.subheader("🚧 Under Construction 🚧")
         st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_option{option_num}")
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_option4")
+
+    elif option_num == "5":
+        st.title("Secondaries Marketplace")
         st.subheader("🚧 Under Construction 🚧")
         st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_option{option_num}")
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_option5")
+
+    elif option_num == "6":
+        render_market_research()
+
 def landing_page():
     logo_path = BASE_DIR / "townsendAI_logo_1.png"
     if logo_path.exists():
@@ -613,6 +618,28 @@ def render_fund_pipeline():
 
         except Exception as e:
             st.error(f"Failed to process file: {e}")
+
+
+
+def render_market_research():
+    st.title("Market Research")
+
+    st.subheader("Townsend Views")
+
+    # Embed Townsend Views page in a scrollable iframe
+    components.iframe(
+        src="https://www.townsendgroup.com/townsend-views/",
+        width=1000,  # You can adjust width
+        height=600,  # You can adjust height
+        scrolling=True
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Return to Home button
+    st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_market_research")
+
+
 
 def main():
     if st.session_state.page == "home":
