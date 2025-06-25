@@ -242,10 +242,6 @@ def render_option(option_num):
                 st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_opt_model", use_container_width=True)
             st.markdown("<br>", unsafe_allow_html=True)
             st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
-
-    elif option_num == "3":
-        render_fund_pipeline()
-
     elif option_num in ["3", "4", "5", "6"]:
         option_labels = [
             "Forecasting & Modeling",
@@ -547,50 +543,6 @@ def render_model_portfolio():
 
         except Exception as e:
             st.error(f"Error processing file: {e}")
-
-def render_fund_pipeline():
-    st.title("Fund & Deal Pipeline Query Tool")
-    st.markdown("⬅️ [Return to Home](#)", unsafe_allow_html=True)
-
-    uploaded_file = st.file_uploader("Upload the Pipeline Excel file", type=["xlsx"], key="pipeline_upload")
-    if uploaded_file:
-        try:
-            df = pd.read_excel(uploaded_file, sheet_name="Pipeline")
-            st.success("File uploaded successfully!")
-
-            # Filters
-            st.subheader("Build Your Query")
-
-            prop_type = st.text_input("Property Type contains (e.g., Residential)", "")
-            is_entity = st.radio("Entity Invest.", ["Any", "Yes", "No"], index=0, horizontal=True)
-            is_strategic = st.radio("Strategic", ["Any", "Yes", "No"], index=0, horizontal=True)
-            is_synd = st.radio("Synd.", ["Any", "Yes", "No"], index=0, horizontal=True)
-            co_invest = st.slider("Co-Invest Equity (in $ millions)", 0, 500, (0, 500))
-            irr_cut = st.slider("Gross IRR (%) greater than", 0.0, 30.0, 0.0)
-            em_cut = st.slider("Gross EM (x) greater than", 0.0, 3.0, 0.0)
-
-            # Apply filters
-            filtered_df = df.copy()
-            if prop_type:
-                filtered_df = filtered_df[filtered_df["Property Type"].str.contains(prop_type, case=False, na=False)]
-            if is_entity != "Any":
-                val = "Yes" if is_entity == "Yes" else "No"
-                filtered_df = filtered_df[filtered_df["Entity Invest."].fillna("").str.lower() == val.lower()]
-            if is_strategic != "Any":
-                val = "Yes" if is_strategic == "Yes" else "No"
-                filtered_df = filtered_df[filtered_df["Strategic"].fillna("").str.lower() == val.lower()]
-            if is_synd != "Any":
-                val = "Yes" if is_synd == "Yes" else "No"
-                filtered_df = filtered_df[filtered_df["Synd."].fillna("").str.lower() == val.lower()]
-            filtered_df = filtered_df[filtered_df["Co-Invest Equity"].fillna(0).between(co_invest[0]*1e6, co_invest[1]*1e6)]
-            filtered_df = filtered_df[filtered_df["Gross IRR"].fillna(0) > irr_cut / 100.0]
-            filtered_df = filtered_df[filtered_df["Gross EM"].fillna(0) > em_cut]
-
-            st.subheader("Filtered Results")
-            st.dataframe(filtered_df, use_container_width=True)
-
-        except Exception as e:
-            st.error(f"Failed to process file: {e}")
 def main():
     if st.session_state.page == "home":
         landing_page()
