@@ -252,16 +252,17 @@ def render_option(option_num):
         st.title("Smart Benchmarks")
         st.subheader("🚧 Under Construction 🚧")
         st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_option4")
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_option4_unique")
 
     elif option_num == "5":
         st.title("Secondaries Marketplace")
         st.subheader("🚧 Under Construction 🚧")
         st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_option5")
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_option5_unique")
 
     elif option_num == "6":
         render_market_research()
+
 
 def landing_page():
     logo_path = BASE_DIR / "townsendAI_logo_1.png"
