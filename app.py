@@ -550,6 +550,7 @@ def render_model_portfolio():
 
 def render_fund_pipeline():
     st.title("Fund & Deal Pipeline Query Tool")
+    st.markdown("⬅️ [Return to Home](#)", unsafe_allow_html=True)
 
     uploaded_file = st.file_uploader("Upload the Pipeline Excel file", type=["xlsx"], key="pipeline_upload")
     if uploaded_file:
