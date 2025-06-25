@@ -242,16 +242,19 @@ def render_option(option_num):
                 st.button("Model Portfolio", on_click=set_scenario, args=("model_portfolio",), key="btn_opt_model", use_container_width=True)
             st.markdown("<br>", unsafe_allow_html=True)
             st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_optimizer")
-    elif option_num in ["3", "4", "5", "6"]:
+    elif option_num == "3":
+        render_fund_pipeline()
+    elif option_num in ["4", "5", "6"]:
         option_labels = [
-            "Forecasting & Modeling",
-            "Optimizer",
-            "Fund & Deal Pipeline",
             "Smart Benchmarks",
             "Secondaries Marketplace",
             "Market Research"
         ]
-        st.title(option_labels[int(option_num)-1])
+        idx = int(option_num) - 4
+        st.title(option_labels[idx])
+        st.subheader("🚧 Under Construction 🚧")
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_option{option_num}")
         st.subheader("🚧 Under Construction 🚧")
         st.markdown("<br>", unsafe_allow_html=True)
         st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key=f"btn_return_option{option_num}")
