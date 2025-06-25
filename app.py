@@ -543,15 +543,6 @@ def render_model_portfolio():
 
         except Exception as e:
             st.error(f"Error processing file: {e}")
-def main():
-    if st.session_state.page == "home":
-        landing_page()
-    elif st.session_state.page.startswith("option"):
-        option_num = st.session_state.page[-1]
-        render_option(option_num)
-
-if __name__ == "__main__":
-    main()
 
 
 
@@ -618,3 +609,14 @@ def render_fund_pipeline():
 
         except Exception as e:
             st.error(f"Failed to process file: {e}")
+
+def main():
+    if st.session_state.page == "home":
+        landing_page()
+    elif st.session_state.page.startswith("option"):
+        option_num = st.session_state.page[-1]
+        render_option(option_num)
+
+if __name__ == "__main__":
+    main()
+
