@@ -607,8 +607,9 @@ def render_fund_pipeline():
                 st.subheader("Filtered Results")
                 st.dataframe(filtered_df, use_container_width=True)
 
-            if st.button("← Return to Home"):
-                st.session_state.page = "Home"
+            if st.button("← Return to Home", use_container_width=True):
+                go_home()
+
 
         except Exception as e:
             st.error(f"Failed to process file: {e}")
