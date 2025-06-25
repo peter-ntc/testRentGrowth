@@ -552,3 +552,69 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+def render_fund_pipeline():
+    st.title("Fund & Deal Pipeline Query Tool")
+
+    uploaded_file = st.file_uploader("Upload the Pipeline Excel file", type=["xlsx"], key="pipeline_upload")
+    if uploaded_file:
+        try:
+            df = pd.read_excel(uploaded_file, sheet_name="Pipeline")
+
+            # Ensure numerical columns are correctly typed
+            df['Gross IRR'] = pd.to_numeric(df['Gross IRR'], errors='coerce')
+            df['Gross EM'] = pd.to_numeric(df['Gross EM'], errors='coerce')
+            df['Co-Invest Equity'] = pd.to_numeric(df['Co-Invest Equity'], errors='coerce')
+
+            st.success("File uploaded successfully!")
+
+            st.subheader("Build Your Query")
+
+            prop_type = st.text_input("Property Type contains (e.g., Residential)", "")
+            is_entity = st.radio("Entity Invest.", ["Any", "Yes", "No"], index=0, horizontal=True)
+            is_strategic = st.radio("Strategic", ["Any", "Yes", "No"], index=0, horizontal=True)
+            is_synd = st.radio("Synd.", ["Any", "Yes", "No"], index=0, horizontal=True)
+            coinv_min, coinv_max = float(df["Co-Invest Equity"].min(skipna=True)), float(df["Co-Invest Equity"].max(skipna=True))
+            coinv_range = st.slider("Co-Invest Equity ($)", int(coinv_min), int(coinv_max), (int(coinv_min), int(coinv_max)))
+
+            irr_min, irr_max = float(df["Gross IRR"].min(skipna=True)), float(df["Gross IRR"].max(skipna=True))
+            irr_range = st.slider("Gross IRR (%) Range", irr_min, irr_max, (irr_min, irr_max))
+
+            em_min, em_max = float(df["Gross EM"].min(skipna=True)), float(df["Gross EM"].max(skipna=True))
+            em_range = st.slider("Gross EM (x) Range", em_min, em_max, (em_min, em_max))
+
+            if st.button("Search"):
+                filtered_df = df.copy()
+
+                if prop_type:
+                    filtered_df = filtered_df[filtered_df["Property Type"].str.contains(prop_type, case=False, na=False)]
+                if is_entity != "Any":
+                    val = "Yes" if is_entity == "Yes" else "No"
+                    filtered_df = filtered_df[filtered_df["Entity Invest."].fillna("").str.lower() == val.lower()]
+                if is_strategic != "Any":
+                    val = "Yes" if is_strategic == "Yes" else "No"
+                    filtered_df = filtered_df[filtered_df["Strategic"].fillna("").str.lower() == val.lower()]
+                if is_synd != "Any":
+                    val = "Yes" if is_synd == "Yes" else "No"
+                    filtered_df = filtered_df[filtered_df["Synd."].fillna("").str.lower() == val.lower()]
+
+                filtered_df = filtered_df[
+                    filtered_df["Co-Invest Equity"].fillna(0).between(coinv_range[0], coinv_range[1])
+                ]
+                filtered_df = filtered_df[
+                    filtered_df["Gross IRR"].fillna(0).between(irr_range[0], irr_range[1])
+                ]
+                filtered_df = filtered_df[
+                    filtered_df["Gross EM"].fillna(0).between(em_range[0], em_range[1])
+                ]
+
+                st.subheader("Filtered Results")
+                st.dataframe(filtered_df, use_container_width=True)
+
+            if st.button("← Return to Home"):
+                st.session_state.page = "Home"
+
+        except Exception as e:
+            st.error(f"Failed to process file: {e}")
