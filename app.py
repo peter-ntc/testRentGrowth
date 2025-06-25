@@ -608,6 +608,9 @@ def render_fund_pipeline():
 
         except Exception as e:
             st.error(f"Failed to process file: {e}")
+
+            if st.button("Back to Home"):
+                st.session_state.selected_option = "0"
 def main():
     if st.session_state.page == "home":
         landing_page()
