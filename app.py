@@ -643,17 +643,21 @@ def render_smart_benchmarks():
     st.title("Smart Benchmarks")
 
     benchmarks = [
-        ("Townsend / ODCE", ""),
-        ("Townsend Majors", "(True Market)"),
-        ("Townsend Expanded Market", "(All Stocks)"),
-        ("Townsend Minors", "(Small Cap / Mid Cap)"),
-        ("Townsend Sector Specific", "(Property Sector Focused Indices)"),
-        ("Townsend Global Property Index", ""),
-        ("Townsend EMEA Property Index", ""),
-        ("Townsend APAC Property Index", ""),
-        ("Townsend Global Infrastructure Index", "(New Index)"),
-        ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
-    ]
+    ("Townsend / ODCE", ""),
+    ("Townsend Non Core", ""),
+    ("Townsend Value Add", ""),
+    ("Townsend Opportunistic", ""),
+    ("Townsend Majors", "(True Market)"),
+    ("Townsend Expanded Market", "(All Stocks)"),
+    ("Townsend Minors", "(Small Cap / Mid Cap)"),
+    ("Townsend Sector Specific", "(Property Sector Focused Indices)"),
+    ("Townsend Global Property Index", ""),
+    ("Townsend EMEA Property Index", ""),
+    ("Townsend APAC Property Index", ""),
+    ("Townsend Global Infrastructure Index", "(New Index)"),
+    ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
+]
+
 
     for label, note in benchmarks:
         st.markdown(
