@@ -643,7 +643,7 @@ def render_smart_benchmarks():
     st.title("Smart Benchmarks")
 
     benchmarks = [
-    ("Townsend / ODCE", ""),
+    ("Townsend Core", ""),
     ("Townsend Non Core", ""),
     ("Townsend Value Add", ""),
     ("Townsend Opportunistic", ""),
