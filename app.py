@@ -642,33 +642,48 @@ def render_market_research():
 def render_smart_benchmarks():
     st.title("Smart Benchmarks")
 
-    benchmarks = [
-    ("Townsend Core", ""),
-    ("Townsend Non Core", ""),
-    ("Townsend Value Add", ""),
-    ("Townsend Opportunistic", ""),
-    ("Townsend Majors", "(True Market)"),
-    ("Townsend Expanded Market", "(All Stocks)"),
-    ("Townsend Minors", "(Small Cap / Mid Cap)"),
-    ("Townsend Sector Specific", "(Property Sector Focused Indices)"),
-    ("Townsend Global Property Index", ""),
-    ("Townsend EMEA Property Index", ""),
-    ("Townsend APAC Property Index", ""),
-    ("Townsend Global Infrastructure Index", "(New Index)"),
-    ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
-]
+    benchmark_files = {
+        "Townsend Core": "B1_Core.xlsx",
+        "Townsend Non Core": "B2_NonCore.xlsx",
+        "Townsend Value Add": "B3_ValueAdd.xlsx",
+        "Townsend Opportunistic": "B4_Opportunistic.xlsx"
+    }
 
+    all_benchmarks = [
+        ("Townsend Core", ""),
+        ("Townsend Non Core", ""),
+        ("Townsend Value Add", ""),
+        ("Townsend Opportunistic", ""),
+        ("Townsend Majors", "(True Market)"),
+        ("Townsend Expanded Market", "(All Stocks)"),
+        ("Townsend Minors", "(Small Cap / Mid Cap)"),
+        ("Townsend Sector Specific", "(Property Sector Focused Indices)"),
+        ("Townsend Global Property Index", ""),
+        ("Townsend EMEA Property Index", ""),
+        ("Townsend APAC Property Index", ""),
+        ("Townsend Global Infrastructure Index", "(New Index)"),
+        ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
+    ]
 
-    for label, note in benchmarks:
-        st.markdown(
-            f"""
-            <div style="border: 1px solid #ccc; border-radius: 10px; padding: 10px; margin-bottom: 10px;">
-                <strong>{label}</strong><br>
-                <span style="font-size: 0.85em; color: #666;">{note}</span>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+    selected = None
+
+    for label, subtext in all_benchmarks:
+        full_label = f"{label}  \n<span style='font-size: 0.8em; color: gray'>{subtext}</span>" if subtext else label
+        if label in benchmark_files:
+            if st.button(label, use_container_width=True, key=f"btn_{label}"):
+                selected = label
+        else:
+            st.markdown(f"**{label}**  <span style='font-size: 0.8em; color: gray'>{subtext}</span>", unsafe_allow_html=True)
+            st.markdown("---")
+
+    if selected:
+        file_path = f"./{benchmark_files[selected]}"
+        try:
+            df = pd.read_excel(file_path)
+            st.subheader(f"{selected} Benchmark Data")
+            st.dataframe(df, height=600, use_container_width=True)
+        except Exception as e:
+            st.error(f"Could not load {file_path}: {e}")
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
