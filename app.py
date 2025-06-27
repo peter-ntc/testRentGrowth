@@ -656,8 +656,11 @@ def render_smart_benchmarks():
     # Handle selected benchmark view
     if "selected_benchmark" in st.session_state and st.session_state.selected_benchmark:
         selected = st.session_state.selected_benchmark
-        file = next((item["file"] for category in benchmarks for item in category["items"] 
-                    if item.get("file") and item["name"] == selected), None)
+        file = next(
+            (item["file"] for category in benchmarks for item in category["items"] 
+             if item.get("file") and item["name"] == selected),
+            None
+        )
         
         st.title(selected)
         
@@ -706,11 +709,17 @@ def render_smart_benchmarks():
             # For benchmarks without data files
             col1, col2 = st.columns([1, 3])
             with col1:
-                st.image(Image.open(BASE_DIR / f"{selected.split()[-1]}.png"), width=200)
+                try:
+                    st.image(Image.open(BASE_DIR / f"{selected.split()[-1]}.png"), width=200)
+                except:
+                    st.warning("Image not available")
             with col2:
                 st.subheader("Benchmark Overview")
-                category_name = next((cat['category'] for cat in benchmarks 
-                                   if any(item['name'] == selected for item in cat['items']), '')
+                category_name = next(
+                    (cat['category'] for cat in benchmarks 
+                     if any(item['name'] == selected for item in cat['items'])),
+                    ''
+                )
                 st.markdown(f"""
                 - **Category**: {category_name}
                 - **Status**: Active
@@ -718,7 +727,8 @@ def render_smart_benchmarks():
                 """)
                 st.info("Detailed benchmark data coming soon. Check back later for updates.")
         
-        st.button("← Back to Benchmarks", on_click=lambda: st.session_state.pop("selected_benchmark"), 
+        st.button("← Back to Benchmarks", 
+                 on_click=lambda: st.session_state.pop("selected_benchmark"), 
                  use_container_width=True)
         return
 
@@ -737,8 +747,9 @@ def render_smart_benchmarks():
                         container.caption(item["note"])
                     
                     if item.get("file"):
-                        if container.button("View Details", key=f"btn_{item['name']}", 
-                                         use_container_width=True):
+                        if container.button("View Details", 
+                                           key=f"btn_{item['name']}", 
+                                           use_container_width=True):
                             st.session_state.selected_benchmark = item["name"]
                             st.rerun()
                     else:
