@@ -642,64 +642,65 @@ def render_market_research():
 def render_smart_benchmarks():
     st.title("Smart Benchmarks")
 
-    benchmarks = [
-        ("Townsend Core", "", "B1_Core.xlsx"),
-        ("Townsend Non Core", "", "B2_NonCore.xlsx"),
-        ("Townsend Value Add", "", "B3_ValueAdd.xlsx"),
-        ("Townsend Opportunistic", "", "B4_Opportunistic.xlsx"),
-        ("Townsend Majors", "(True Market)", None),
-        ("Townsend Expanded Market", "(All Stocks)", None),
-        ("Townsend Minors", "(Small Cap / Mid Cap)", None),
-        ("Townsend Sector Specific", "(Property Sector Focused Indices)", None),
-        ("Townsend Global Property Index", "", None),
-        ("Townsend EMEA Property Index", "", None),
-        ("Townsend APAC Property Index", "", None),
-        ("Townsend Global Infrastructure Index", "(New Index)", None),
-        ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)", None)
-    ]
+    benchmark_mapping = {
+        "Townsend Core": "B1_Core.xlsx",
+        "Townsend Non Core": "B2_NonCore.xlsx",
+        "Townsend Value Add": "B3_ValueAdd.xlsx",
+        "Townsend Opportunistic": "B4_Opportunistic.xlsx"
+    }
 
-    if "selected_benchmark" not in st.session_state:
-        st.session_state.selected_benchmark = None
+    # If user selected a benchmark, load and display it
+    selected_benchmark = st.session_state.get("selected_benchmark")
 
-    if st.session_state.selected_benchmark:
-        # Show selected benchmark file content
-        file_name = st.session_state.selected_benchmark
-        st.subheader(f"📊 Benchmark Data: {file_name.replace('.xlsx', '').replace('_', ' ')}")
+    if selected_benchmark:
+        filename = benchmark_mapping.get(selected_benchmark)
+        if filename:
+            file_path = f"./{filename}"
+            try:
+                df = pd.read_excel(file_path)
 
-        try:
-            df = pd.read_excel(BASE_DIR / file_name)
-            for col in df.columns:
-                if pd.api.types.is_numeric_dtype(df[col]):
-                    df[col] = df[col].apply(lambda x: f"{x:.2%}" if pd.notna(x) else "")
-            st.dataframe(df, use_container_width=True, height=600)
-        except Exception as e:
-            st.error(f"Could not load file {file_name}: {e}")
+                # Format all numeric columns as percentages
+                for col in df.select_dtypes(include='number').columns:
+                    df[col] = df[col].apply(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
 
-        st.markdown("<br>", unsafe_allow_html=True)
+                st.subheader(f"{selected_benchmark} Data")
+                st.dataframe(df, use_container_width=True)
+
+            except Exception as e:
+                st.error(f"Failed to load {filename}: {e}")
+        else:
+            st.error("Benchmark file not found.")
+
+        # Return button
         if st.button("🔙 Return to Benchmarks"):
             st.session_state.selected_benchmark = None
             st.experimental_rerun()
         return
 
-    # Show benchmark options
-    for label, note, file_name in benchmarks:
-        if file_name:
-            if st.button(label, use_container_width=True, key=f"btn_{file_name}"):
-                st.session_state.selected_benchmark = file_name
+    # If no benchmark is selected, show the main menu
+    benchmark_labels = [
+        ("Townsend Core", ""),
+        ("Townsend Non Core", ""),
+        ("Townsend Value Add", ""),
+        ("Townsend Opportunistic", ""),
+        ("Townsend Majors", "(True Market)"),
+        ("Townsend Expanded Market", "(All Stocks)"),
+        ("Townsend Minors", "(Small Cap / Mid Cap)"),
+        ("Townsend Sector Specific", "(Property Sector Focused Indices)"),
+        ("Townsend Global Property Index", ""),
+        ("Townsend EMEA Property Index", ""),
+        ("Townsend APAC Property Index", ""),
+        ("Townsend Global Infrastructure Index", "(New Index)"),
+        ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
+    ]
+
+    for label, note in benchmark_labels:
+        if label in benchmark_mapping:
+            if st.button(f"{label} {note}", key=f"btn_{label.replace(' ', '_')}"):
+                st.session_state.selected_benchmark = label
                 st.experimental_rerun()
         else:
-            st.markdown(
-                f"""
-                <div style="border: 1px solid #ccc; border-radius: 10px; padding: 10px; margin-bottom: 10px;">
-                    <strong>{label}</strong><br>
-                    <span style="font-size: 0.85em; color: #666;">{note}</span>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
+            st.markdown(f"**{label}** <span style='font-size: 0.8em'>{note}</span>", unsafe_allow_html=True)
 
 
 
