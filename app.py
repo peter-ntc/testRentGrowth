@@ -685,6 +685,8 @@ def render_smart_benchmarks():
             df = format_percentage_cols(df)
 
             st.subheader(f"{selected} Benchmark Data")
+            for col in df.select_dtypes(include='number').columns:
+                df[col] = df[col].apply(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
             st.dataframe(df, height=600, use_container_width=True)
         except Exception as e:
             st.error(f"Could not load {file_path}: {e}")
