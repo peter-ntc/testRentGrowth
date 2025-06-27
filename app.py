@@ -642,18 +642,11 @@ def render_market_research():
 def render_smart_benchmarks():
     st.title("Smart Benchmarks")
 
-    benchmark_files = {
-        "Townsend Core": "B1_Core.xlsx",
-        "Townsend Non Core": "B2_NonCore.xlsx",
-        "Townsend Value Add": "B3_ValueAdd.xlsx",
-        "Townsend Opportunistic": "B4_Opportunistic.xlsx"
-    }
-
-    all_benchmarks = [
-        ("Townsend Core", ""),
-        ("Townsend Non Core", ""),
-        ("Townsend Value Add", ""),
-        ("Townsend Opportunistic", ""),
+    benchmarks = [
+        ("Townsend Core", "B1_Core.xlsx"),
+        ("Townsend Non Core", "B2_NonCore.xlsx"),
+        ("Townsend Value Add", "B3_ValueAdd.xlsx"),
+        ("Townsend Opportunistic", "B4_Opportunistic.xlsx"),
         ("Townsend Majors", "(True Market)"),
         ("Townsend Expanded Market", "(All Stocks)"),
         ("Townsend Minors", "(Small Cap / Mid Cap)"),
@@ -665,50 +658,31 @@ def render_smart_benchmarks():
         ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
     ]
 
-    # Initial view if no subpage is selected
-    if st.session_state.get("smart_benchmark_page", "overview") == "overview":
-        for label, subtext in all_benchmarks:
-            display_label = f"**{label}**  \n<span style='font-size: 0.8em; color: gray'>{subtext}</span>" if subtext else f"**{label}**"
-            if label in benchmark_files:
-                if st.button(label, use_container_width=True, key=f"btn_{label}"):
-                    st.session_state.selected_benchmark = label
-                    st.session_state.smart_benchmark_page = "detail"
-                    st.experimental_rerun()
-                    return
-            else:
-                st.markdown(display_label, unsafe_allow_html=True)
-                st.markdown("---")
+    for label, detail in benchmarks:
+        if "xlsx" in detail:
+            if st.button(label, use_container_width=True, key=f"btn_{label}"):
+                st.session_state.selected_benchmark = detail
+                st.experimental_rerun()
+        else:
+            st.markdown(f"#### {label} <span style='font-size: 0.8em;'>{detail}</span>", unsafe_allow_html=True)
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
-
-    # Detailed benchmark page
-    elif st.session_state.get("smart_benchmark_page") == "detail":
-        selected = st.session_state.get("selected_benchmark", "")
-        file_path = f"./{benchmark_files[selected]}"
-
+    # Display the selected benchmark Excel file after rerun
+    selected = st.session_state.get("selected_benchmark")
+    if selected:
         try:
-            df = pd.read_excel(file_path)
-
-            # Format numeric columns as percent
-            def format_percentage_cols(df):
-                formatted_df = df.copy()
-                for col in formatted_df.columns:
-                    if pd.api.types.is_numeric_dtype(formatted_df[col]):
-                        formatted_df[col] = formatted_df[col].map(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
-                return formatted_df
-
-            df = format_percentage_cols(df)
-
-            st.subheader(f"{selected} Benchmark Data")
-            st.dataframe(df, height=600, use_container_width=True)
-
+            df = pd.read_excel(selected)
+            # Format percentages if numeric
+            for col in df.columns:
+                if df[col].dtype in ["float64", "int64"]:
+                    df[col] = df[col].apply(lambda x: f"{x:.2%}" if abs(x) < 10 else x)
+            st.markdown("### Benchmark Data")
+            st.dataframe(df, use_container_width=True, height=600)
         except Exception as e:
-            st.error(f"Could not load {file_path}: {e}")
+            st.error(f"Could not load file '{selected}': {e}")
 
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🔙 Return to Smart Benchmarks Overview", use_container_width=True):
-            st.session_state.smart_benchmark_page = "overview"
+        if st.button("🔙 Return to Home", use_container_width=True):
+            st.session_state.page = "home"
             st.session_state.selected_benchmark = None
             st.experimental_rerun()
 
