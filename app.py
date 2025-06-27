@@ -665,20 +665,30 @@ def render_smart_benchmarks():
         ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
     ]
 
-    selected = None
+    if "selected_benchmark" not in st.session_state:
+        st.session_state.selected_benchmark = None
 
-    for label, subtext in all_benchmarks:
-        full_label = f"{label}  \n<span style='font-size: 0.8em; color: gray'>{subtext}</span>" if subtext else label
-        if label in benchmark_files:
-            if st.button(label, use_container_width=True, key=f"btn_{label}"):
-                st.session_state.selected_benchmark = label
-        else:
-            st.markdown(f"**{label}**  <span style='font-size: 0.8em; color: gray'>{subtext}</span>", unsafe_allow_html=True)
-            st.markdown("---")
+    if "smart_benchmark_page" not in st.session_state:
+        st.session_state.smart_benchmark_page = "menu"
 
-    if "selected_benchmark" in st.session_state:
-        selected = st.session_state.selected_benchmark
-        file_path = f"./{benchmark_files[selected]}"
+    if st.session_state.smart_benchmark_page == "menu":
+        for label, subtext in all_benchmarks:
+            if label in benchmark_files:
+                if st.button(label, use_container_width=True, key=f"btn_{label}"):
+                    st.session_state.selected_benchmark = label
+                    st.session_state.smart_benchmark_page = "detail"
+                    st.experimental_rerun()
+            else:
+                st.markdown(f"**{label}**  <span style='font-size: 0.8em; color: gray'>{subtext}</span>", unsafe_allow_html=True)
+                st.markdown("---")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
+
+    elif st.session_state.smart_benchmark_page == "detail":
+        label = st.session_state.selected_benchmark
+        file_path = f"./{benchmark_files[label]}"
+
         try:
             df = pd.read_excel(file_path)
 
@@ -691,14 +701,18 @@ def render_smart_benchmarks():
 
             df = format_percentage_cols(df)
 
-            st.subheader(f"{selected} Benchmark Data")
+            st.subheader(f"{label} Benchmark Data")
             st.dataframe(df, height=600, use_container_width=True)
 
         except Exception as e:
             st.error(f"Could not load {file_path}: {e}")
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🔙 Return to Smart Benchmark Menu"):
+            st.session_state.smart_benchmark_page = "menu"
+            st.experimental_rerun()
+
+        st.button("🏠 Return to Home", on_click=go_home, use_container_width=True)
 
 
 
