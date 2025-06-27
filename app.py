@@ -554,70 +554,239 @@ def render_model_portfolio():
 
 
 def render_fund_pipeline():
-    st.title("Fund & Deal Pipeline Query Tool")
-
-    uploaded_file = st.file_uploader("Upload the Pipeline Excel file", type=["xlsx"], key="pipeline_upload")
-    if uploaded_file:
-        try:
+    st.title("🏦 Fund & Deal Pipeline Analytics")
+    st.markdown("Explore and analyze your investment pipeline with advanced filtering and visualization tools.")
+    
+    # File upload section with sample data option
+    uploaded_file = st.file_uploader("Upload Pipeline Excel File", type=["xlsx"], 
+                                   help="Upload an Excel file with 'Pipeline' sheet containing your deal data")
+    
+    if not uploaded_file:
+        if st.button("Use Sample Data", help="Try with sample pipeline data"):
+            sample_data = {
+                "Property Type": ["Residential", "Office", "Retail", "Industrial", "Mixed Use"],
+                "Entity Invest.": ["Yes", "No", "Yes", "No", "Yes"],
+                "Strategic": ["Yes", "No", "Yes", "Yes", "No"],
+                "Synd.": ["No", "Yes", "No", "Yes", "No"],
+                "Co-Invest Equity": [500000, 1200000, 750000, 2000000, 350000],
+                "Gross IRR": [0.15, 0.12, 0.18, 0.10, 0.22],
+                "Gross EM": [1.8, 1.5, 2.1, 1.3, 2.4],
+                "Fund Name": ["Alpha Fund", "Beta Fund", "Gamma Fund", "Delta Fund", "Epsilon Fund"],
+                "Vintage Year": [2020, 2021, 2022, 2021, 2023]
+            }
+            df = pd.DataFrame(sample_data)
+            st.session_state.pipeline_df = df
+            st.success("Sample data loaded successfully!")
+        return
+    
+    try:
+        # Load and prepare data
+        if 'pipeline_df' not in st.session_state or st.button("Reload Data"):
             df = pd.read_excel(uploaded_file, sheet_name="Pipeline")
-
-            # Ensure numerical columns are correctly typed
-            df['Gross IRR'] = pd.to_numeric(df['Gross IRR'], errors='coerce')
-            df['Gross EM'] = pd.to_numeric(df['Gross EM'], errors='coerce')
-            df['Co-Invest Equity'] = pd.to_numeric(df['Co-Invest Equity'], errors='coerce')
-
-            st.success("File uploaded successfully!")
-            st.subheader("Build Your Query")
-
-            prop_type = st.text_input("Property Type contains (e.g., Residential)", "")
-            is_entity = st.radio("Entity Invest.", ["Any", "Yes", "No"], index=0, horizontal=True)
-            is_strategic = st.radio("Strategic", ["Any", "Yes", "No"], index=0, horizontal=True)
-            is_synd = st.radio("Synd.", ["Any", "Yes", "No"], index=0, horizontal=True)
-
-            coinv_min, coinv_max = float(df["Co-Invest Equity"].min(skipna=True)), float(df["Co-Invest Equity"].max(skipna=True))
-            coinv_range = st.slider("Co-Invest Equity ($)", int(coinv_min), int(coinv_max), (int(coinv_min), int(coinv_max)))
-
-            irr_min, irr_max = float(df["Gross IRR"].min(skipna=True)), float(df["Gross IRR"].max(skipna=True))
-            irr_range = st.slider("Gross IRR (%) Range", irr_min, irr_max, (irr_min, irr_max))
-
-            em_min, em_max = float(df["Gross EM"].min(skipna=True)), float(df["Gross EM"].max(skipna=True))
-            em_range = st.slider("Gross EM (x) Range", em_min, em_max, (em_min, em_max))
-
-            if st.button("Search"):
-                filtered_df = df.copy()
-
-                if prop_type:
-                    filtered_df = filtered_df[filtered_df["Property Type"].str.contains(prop_type, case=False, na=False)]
-                if is_entity != "Any":
-                    val = "Yes" if is_entity == "Yes" else "No"
-                    filtered_df = filtered_df[filtered_df["Entity Invest."].fillna("").str.lower() == val.lower()]
-                if is_strategic != "Any":
-                    val = "Yes" if is_strategic == "Yes" else "No"
-                    filtered_df = filtered_df[filtered_df["Strategic"].fillna("").str.lower() == val.lower()]
-                if is_synd != "Any":
-                    val = "Yes" if is_synd == "Yes" else "No"
-                    filtered_df = filtered_df[filtered_df["Synd."].fillna("").str.lower() == val.lower()]
-
-                filtered_df = filtered_df[
-                    filtered_df["Co-Invest Equity"].fillna(0).between(coinv_range[0], coinv_range[1])
-                ]
-                filtered_df = filtered_df[
-                    filtered_df["Gross IRR"].fillna(0).between(irr_range[0], irr_range[1])
-                ]
-                filtered_df = filtered_df[
-                    filtered_df["Gross EM"].fillna(0).between(em_range[0], em_range[1])
-                ]
-
-                st.subheader("Filtered Results")
-                st.dataframe(filtered_df, use_container_width=True)
-
-            if st.button("← Return to Home", use_container_width=True):
-                go_home()
-
-
-        except Exception as e:
-            st.error(f"Failed to process file: {e}")
-
+            
+            # Convert numeric columns and handle missing values
+            numeric_cols = ['Gross IRR', 'Gross EM', 'Co-Invest Equity']
+            for col in numeric_cols:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+            
+            st.session_state.pipeline_df = df
+            st.success("Data loaded successfully!")
+        
+        df = st.session_state.pipeline_df
+        
+        # Quick stats overview
+        with st.expander("📊 Pipeline Overview", expanded=True):
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Total Deals", len(df))
+            col2.metric("Avg IRR", f"{df['Gross IRR'].mean():.1%}")
+            col3.metric("Avg Equity", f"${df['Co-Invest Equity'].mean():,.0f}")
+        
+        # Filter controls in a sidebar
+        with st.sidebar:
+            st.subheader("🔍 Filter Options")
+            
+            # Text search filters
+            prop_type = st.text_input("Property Type Filter", "")
+            fund_name = st.text_input("Fund Name Filter", "")
+            
+            # Boolean filters
+            bool_filters = {
+                "Entity Invest.": ["Any", "Yes", "No"],
+                "Strategic": ["Any", "Yes", "No"],
+                "Synd.": ["Any", "Yes", "No"]
+            }
+            
+            bool_selections = {}
+            for col, options in bool_filters.items():
+                if col in df.columns:
+                    bool_selections[col] = st.radio(col, options, horizontal=True)
+            
+            # Numeric range filters
+            st.markdown("---")
+            st.subheader("Financial Metrics")
+            
+            if 'Co-Invest Equity' in df.columns:
+                coinv_min, coinv_max = int(df["Co-Invest Equity"].min()), int(df["Co-Invest Equity"].max())
+                coinv_range = st.slider("Co-Invest Equity ($)", 
+                                       coinv_min, coinv_max, 
+                                       (coinv_min, coinv_max),
+                                       help="Filter by investment amount range")
+            
+            if 'Gross IRR' in df.columns:
+                irr_range = st.slider("Gross IRR (%) Range", 
+                                     float(df["Gross IRR"].min()), 
+                                     float(df["Gross IRR"].max()), 
+                                     (float(df["Gross IRR"].min()), 
+                                      float(df["Gross IRR"].max())),
+                                     format="%.2f")
+            
+            if 'Gross EM' in df.columns:
+                em_range = st.slider("Gross EM (x) Range", 
+                                   float(df["Gross EM"].min()), 
+                                   float(df["Gross EM"].max()), 
+                                   (float(df["Gross EM"].min()), 
+                                    float(df["Gross EM"].max())),
+                                   format="%.2f")
+        
+        # Apply filters
+        filtered_df = df.copy()
+        
+        # Text filters
+        if prop_type:
+            filtered_df = filtered_df[filtered_df["Property Type"].str.contains(prop_type, case=False, na=False)]
+        if fund_name:
+            filtered_df = filtered_df[filtered_df["Fund Name"].str.contains(fund_name, case=False, na=False)]
+        
+        # Boolean filters
+        for col, selection in bool_selections.items():
+            if selection != "Any":
+                val = selection == "Yes"
+                filtered_df = filtered_df[filtered_df[col].fillna("").str.lower() == str(val).lower()]
+        
+        # Numeric filters
+        if 'Co-Invest Equity' in df.columns:
+            filtered_df = filtered_df[filtered_df["Co-Invest Equity"].between(coinv_range[0], coinv_range[1])]
+        if 'Gross IRR' in df.columns:
+            filtered_df = filtered_df[filtered_df["Gross IRR"].between(irr_range[0], irr_range[1])]
+        if 'Gross EM' in df.columns:
+            filtered_df = filtered_df[filtered_df["Gross EM"].between(em_range[0], em_range[1])]
+        
+        # Results display
+        st.subheader(f"📋 Filtered Results ({len(filtered_df)} deals)")
+        
+        if not filtered_df.empty:
+            # Tabbed interface for different views
+            tab1, tab2, tab3 = st.tabs(["Data Table", "Visualizations", "Export"])
+            
+            with tab1:
+                # Enhanced dataframe display
+                gb = st.grid(
+                    [3,1], 
+                    vertical_align="bottom",
+                    gap="small"
+                )
+                gb.dataframe(
+                    filtered_df.style.format({
+                        'Gross IRR': '{:.1%}',
+                        'Gross EM': '{:.1f}x',
+                        'Co-Invest Equity': '${:,.0f}'
+                    }),
+                    use_container_width=True,
+                    height=600
+                )
+                
+                gb.download_button(
+                    "Download Filtered Data",
+                    filtered_df.to_csv(index=False).encode('utf-8'),
+                    "filtered_pipeline.csv",
+                    "text/csv"
+                )
+            
+            with tab2:
+                # Visualizations
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    if 'Property Type' in filtered_df.columns:
+                        st.subheader("By Property Type")
+                        fig1 = px.pie(
+                            filtered_df, 
+                            names='Property Type', 
+                            values='Co-Invest Equity',
+                            hole=0.4
+                        )
+                        st.plotly_chart(fig1, use_container_width=True)
+                
+                with col2:
+                    if 'Gross IRR' in filtered_df.columns:
+                        st.subheader("IRR Distribution")
+                        fig2 = px.histogram(
+                            filtered_df, 
+                            x='Gross IRR',
+                            nbins=10,
+                            color='Property Type' if 'Property Type' in filtered_df.columns else None
+                        )
+                        st.plotly_chart(fig2, use_container_width=True)
+                
+                if 'Vintage Year' in filtered_df.columns:
+                    st.subheader("Trends Over Time")
+                    fig3 = px.line(
+                        filtered_df.groupby('Vintage Year').agg({
+                            'Gross IRR': 'mean',
+                            'Gross EM': 'mean',
+                            'Co-Invest Equity': 'sum'
+                        }).reset_index(),
+                        x='Vintage Year',
+                        y=['Gross IRR', 'Gross EM'],
+                        secondary_y=['Co-Invest Equity'],
+                        labels={'value': 'Metric Value'}
+                    )
+                    st.plotly_chart(fig3, use_container_width=True)
+            
+            with tab3:
+                # Export options
+                st.subheader("Export Options")
+                
+                export_format = st.radio(
+                    "Select Export Format",
+                    ["CSV", "Excel", "JSON"],
+                    horizontal=True
+                )
+                
+                if export_format == "CSV":
+                    csv = filtered_df.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        "Download as CSV",
+                        data=csv,
+                        file_name="pipeline_data.csv",
+                        mime="text/csv"
+                    )
+                elif export_format == "Excel":
+                    excel_buffer = BytesIO()
+                    filtered_df.to_excel(excel_buffer, index=False)
+                    st.download_button(
+                        "Download as Excel",
+                        data=excel_buffer.getvalue(),
+                        file_name="pipeline_data.xlsx",
+                        mime="application/vnd.ms-excel"
+                    )
+                else:
+                    json_data = filtered_df.to_json(orient="records")
+                    st.download_button(
+                        "Download as JSON",
+                        data=json_data,
+                        file_name="pipeline_data.json",
+                        mime="application/json"
+                    )
+        else:
+            st.warning("No deals match your filter criteria")
+        
+        st.button("← Return to Home", on_click=go_home, use_container_width=True)
+    
+    except Exception as e:
+        st.error(f"Error processing pipeline data: {str(e)}")
+        st.error("Please ensure your file has the correct format with a 'Pipeline' sheet")
 def render_market_research():
     st.title("Market Research")
 
