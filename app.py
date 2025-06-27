@@ -709,9 +709,10 @@ def render_smart_benchmarks():
                 st.image(Image.open(BASE_DIR / f"{selected.split()[-1]}.png"), width=200)
             with col2:
                 st.subheader("Benchmark Overview")
+                category_name = next((cat['category'] for cat in benchmarks 
+                                   if any(item['name'] == selected for item in cat['items']), '')
                 st.markdown(f"""
-                - **Category**: {next((cat['category'] for cat in benchmarks 
-                                      if any(item['name'] == selected for item in cat['items']), '')}
+                - **Category**: {category_name}
                 - **Status**: Active
                 - **Coverage**: Global
                 """)
@@ -737,14 +738,13 @@ def render_smart_benchmarks():
                     
                     if item.get("file"):
                         if container.button("View Details", key=f"btn_{item['name']}", 
-                                           use_container_width=True):
+                                         use_container_width=True):
                             st.session_state.selected_benchmark = item["name"]
                             st.rerun()
                     else:
                         container.info("Coming soon")
     
     st.button("← Return to Home", on_click=go_home, use_container_width=True)
-
 
 def main():
     # Initialize session state values if not set
