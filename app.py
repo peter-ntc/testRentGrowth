@@ -642,7 +642,6 @@ def render_market_research():
 def render_smart_benchmarks():
     st.title("Smart Benchmarks")
 
-    # Define button labels and associated file names
     benchmark_data = [
         ("Townsend Core", "B1_Core"),
         ("Townsend Non Core", "B2_NonCore"),
@@ -659,46 +658,43 @@ def render_smart_benchmarks():
         ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
     ]
 
-    # If a benchmark has been selected, show its content
-    if "selected_benchmark" in st.session_state:
-        bm = st.session_state.selected_benchmark
-        excel_file = f"{bm}.xlsx"
-        image_file = f"{bm}.png"
+    selected = st.session_state.get("selected_benchmark", None)
 
-        # Load and display the image
+    if selected:
+        # Display image if available
+        img_path = f"{selected}.png"
         try:
-            st.image(image_file, use_column_width=True)
-        except Exception as e:
-            st.error(f"Could not load image: {image_file}")
+            st.image(img_path, caption=f"{selected} Returns", use_container_width=True)
+        except Exception:
+            st.warning(f"Could not load image: {img_path}")
 
-        # Load and display the Excel data
+        # Display Excel data if available
+        excel_path = f"{selected}.xlsx"
         try:
-            df = pd.read_excel(excel_file)
-            percent_cols = df.select_dtypes(include='number').columns
-            for col in percent_cols:
-                df[col] = df[col].apply(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
+            df = pd.read_excel(excel_path)
+            df = df.style.format("{:.2%}")
+            st.subheader("Benchmark Data")
             st.dataframe(df, use_container_width=True)
-        except Exception as e:
-            st.error(f"Could not load Excel file: {excel_file}")
+        except Exception:
+            st.warning(f"Could not load Excel file: {excel_path}")
+
+        # Back button
+        if st.button("🔙 Return to Benchmarks", use_container_width=True):
+            st.session_state.selected_benchmark = None
+            st.experimental_rerun()
+
+    else:
+        st.markdown("### Available Benchmarks")
+        for label, file_key in benchmark_data:
+            if file_key.startswith("B"):  # clickable items
+                if st.button(label, use_container_width=True, key=f"btn_{file_key}"):
+                    st.session_state.selected_benchmark = file_key
+                    st.experimental_rerun()
+            else:
+                st.markdown(f"🟦 **{label}** <span style='font-size: small'>{file_key}</span>", unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🔙 Back to Benchmarks", use_container_width=True):
-            del st.session_state.selected_benchmark
-            st.experimental_rerun()
-        return
-
-    # Show benchmark buttons
-    for name, note in benchmark_data:
-        label = name if not note else f"{name} {note}"
-        if name.startswith("Townsend Core") or "Non Core" in name or "Value Add" in name or "Opportunistic" in name:
-            if st.button(label, use_container_width=True):
-                st.session_state.selected_benchmark = label.replace("Townsend ", "").replace(" ", "")
-                st.experimental_rerun()
-        else:
-            st.markdown(f"🟦 **{name}** <span style='font-size: small'>{note}</span>", unsafe_allow_html=True)
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
+        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_smart")
 
 
 
