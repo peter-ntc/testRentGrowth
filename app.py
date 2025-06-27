@@ -620,82 +620,130 @@ def render_fund_pipeline():
 
 
 
-def render_market_research():
-    st.title("Market Research")
-
-    st.subheader("Townsend Views")
-
-    # Embed Townsend Views page in a scrollable iframe
-    components.iframe(
-        src="https://www.townsendgroup.com/townsend-views/",
-        width=1000,  # You can adjust width
-        height=600,  # You can adjust height
-        scrolling=True
-    )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # Return to Home button
-    st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_market_research")
-
-
 def render_smart_benchmarks():
-    st.title("Smart Benchmarks")
-
-    benchmark_data = [
-        ("Townsend Core", "B1_Core"),
-        ("Townsend Non Core", "B2_NonCore"),
-        ("Townsend Value Add", "B3_ValueAdd"),
-        ("Townsend Opportunistic", "B4_Opportunistic"),
-        ("Townsend Majors", "(True Market)"),
-        ("Townsend Expanded Market", "(All Stocks)"),
-        ("Townsend Minors", "(Small Cap / Mid Cap)"),
-        ("Townsend Sector Specific", "(Property Sector Focused Indices)"),
-        ("Townsend Global Property Index", ""),
-        ("Townsend EMEA Property Index", ""),
-        ("Townsend APAC Property Index", ""),
-        ("Townsend Global Infrastructure Index", "(New Index)"),
-        ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
+    # Define benchmark data with categories and icons
+    benchmarks = [
+        {
+            "category": "Townsend US Property Indices",
+            "items": [
+                {"name": "Townsend Core", "icon": "🏢", "file": "B1_Core.xlsx"},
+                {"name": "Townsend Non Core", "icon": "🏗️", "file": "B2_NonCore.xlsx"},
+                {"name": "Townsend Value Add", "icon": "🔄", "file": "B3_ValueAdd.xlsx"},
+                {"name": "Townsend Opportunistic", "icon": "🎯", "file": "B4_Opportunistic.xlsx"},
+            ]
+        },
+        {
+            "category": "Market Segment Indices",
+            "items": [
+                {"name": "Townsend Majors", "icon": "📊", "note": "(True Market)"},
+                {"name": "Townsend Expanded Market", "icon": "🌐", "note": "(All Stocks)"},
+                {"name": "Townsend Minors", "icon": "📈", "note": "(Small Cap / Mid Cap)"},
+                {"name": "Townsend Sector Specific", "icon": "🏘️", "note": "(Property Sector Focused Indices)"},
+            ]
+        },
+        {
+            "category": "Global Indices",
+            "items": [
+                {"name": "Townsend Global Property Index", "icon": "🌍"},
+                {"name": "Townsend EMEA Property Index", "icon": "🇪🇺"},
+                {"name": "Townsend APAC Property Index", "icon": "🌏"},
+                {"name": "Townsend Global Infrastructure Index", "icon": "🛣️", "note": "(New Index)"},
+                {"name": "Townsend Global Real Assets Index", "icon": "🏦", "note": "(Combine Global Infra and True Market)"},
+            ]
+        }
     ]
 
-    selected = st.session_state.get("selected_benchmark", None)
+    # Handle selected benchmark view
+    if "selected_benchmark" in st.session_state and st.session_state.selected_benchmark:
+        selected = st.session_state.selected_benchmark
+        file = next((item["file"] for category in benchmarks for item in category["items"] 
+                    if item.get("file") and item["name"] == selected), None)
+        
+        st.title(selected)
+        
+        if file:
+            try:
+                df = pd.read_excel(BASE_DIR / file)
+                
+                # Format percentage columns
+                percent_cols = [col for col in df.columns if any(x in col.lower() for x in ['return', 'growth', 'rate'])]
+                for col in percent_cols:
+                    if pd.api.types.is_numeric_dtype(df[col]):
+                        df[col] = df[col].apply(lambda x: f"{x:.2%}" if pd.notna(x) else "")
+                
+                # Display data with tabs
+                tab1, tab2 = st.tabs(["Data Table", "Visualization"])
+                
+                with tab1:
+                    st.dataframe(df, use_container_width=True, height=600)
+                
+                with tab2:
+                    # Add simple visualization
+                    numeric_cols = df.select_dtypes(include=[np.number]).columns
+                    if len(numeric_cols) > 0:
+                        selected_col = st.selectbox("Select metric to visualize", numeric_cols)
+                        fig, ax = plt.subplots(figsize=(10, 6))
+                        if len(df) > 10:  # For large datasets, use barh
+                            df.nlargest(10, selected_col).plot.barh(y=selected_col, ax=ax)
+                        else:
+                            df.plot.bar(x=df.columns[0], y=selected_col, ax=ax)
+                        ax.set_title(f"{selected} - {selected_col}")
+                        st.pyplot(fig)
+                    else:
+                        st.warning("No numeric columns available for visualization")
+                
+                # Add download button
+                csv = df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="Download as CSV",
+                    data=csv,
+                    file_name=f"{selected.replace(' ', '_')}.csv",
+                    mime='text/csv',
+                )
+            except Exception as e:
+                st.error(f"Failed to load benchmark data: {e}")
+        else:
+            # For benchmarks without data files
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                st.image(Image.open(BASE_DIR / f"{selected.split()[-1]}.png"), width=200)
+            with col2:
+                st.subheader("Benchmark Overview")
+                st.markdown(f"""
+                - **Category**: {next((cat['category'] for cat in benchmarks 
+                                      if any(item['name'] == selected for item in cat['items']), '')}
+                - **Status**: Active
+                - **Coverage**: Global
+                """)
+                st.info("Detailed benchmark data coming soon. Check back later for updates.")
+        
+        st.button("← Back to Benchmarks", on_click=lambda: st.session_state.pop("selected_benchmark"), 
+                 use_container_width=True)
+        return
 
-    if selected:
-        # Display image if available
-        img_path = f"{selected}.png"
-        try:
-            st.image(img_path, caption=f"{selected} Returns", use_container_width=True)
-        except Exception:
-            st.warning(f"Could not load image: {img_path}")
-
-        # Display Excel data if available
-        excel_path = f"{selected}.xlsx"
-        try:
-            df = pd.read_excel(excel_path)
-            df = df.style.format("{:.2%}")
-            st.subheader("Benchmark Data")
-            st.dataframe(df, use_container_width=True)
-        except Exception:
-            st.warning(f"Could not load Excel file: {excel_path}")
-
-        # Back button
-        if st.button("🔙 Return to Benchmarks", use_container_width=True):
-            st.session_state.selected_benchmark = None
-            st.experimental_rerun()
-
-    else:
-        st.markdown("### Available Benchmarks")
-        for label, file_key in benchmark_data:
-            if file_key.startswith("B"):  # clickable items
-                if st.button(label, use_container_width=True, key=f"btn_{file_key}"):
-                    st.session_state.selected_benchmark = file_key
-                    st.experimental_rerun()
-            else:
-                st.markdown(f"🟦 **{label}** <span style='font-size: small'>{file_key}</span>", unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_smart")
-
+    # Main benchmark selection interface
+    st.title("Smart Benchmarks")
+    st.markdown("Explore Townsend's proprietary benchmark indices across different market segments")
+    
+    for category in benchmarks:
+        with st.expander(f"### {category['category']}", expanded=True):
+            cols = st.columns(3)
+            for idx, item in enumerate(category["items"]):
+                with cols[idx % 3]:
+                    container = st.container(border=True)
+                    container.markdown(f"#### {item.get('icon', '📌')} {item['name']}")
+                    if item.get("note"):
+                        container.caption(item["note"])
+                    
+                    if item.get("file"):
+                        if container.button("View Details", key=f"btn_{item['name']}", 
+                                           use_container_width=True):
+                            st.session_state.selected_benchmark = item["name"]
+                            st.rerun()
+                    else:
+                        container.info("Coming soon")
+    
+    st.button("← Return to Home", on_click=go_home, use_container_width=True)
 
 
 def main():
