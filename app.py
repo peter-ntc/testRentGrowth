@@ -642,21 +642,12 @@ def render_market_research():
 def render_smart_benchmarks():
     st.title("Smart Benchmarks")
 
-    if "benchmark_view" not in st.session_state:
-        st.session_state.benchmark_view = None
-
-    benchmark_files = {
-        "Townsend Core": ("B1_Core.xlsx", "B1_Core.png"),
-        "Townsend Non Core": ("B2_NonCore.xlsx", "B2_NonCore.png"),
-        "Townsend Value Add": ("B3_ValueAdd.xlsx", "B3_ValueAdd.png"),
-        "Townsend Opportunistic": ("B4_Opportunistic.xlsx", "B4_Opportunistic.png"),
-    }
-
-    benchmark_labels = [
-        ("Townsend Core", ""),
-        ("Townsend Non Core", ""),
-        ("Townsend Value Add", ""),
-        ("Townsend Opportunistic", ""),
+    # Define button labels and associated file names
+    benchmark_data = [
+        ("Townsend Core", "B1_Core"),
+        ("Townsend Non Core", "B2_NonCore"),
+        ("Townsend Value Add", "B3_ValueAdd"),
+        ("Townsend Opportunistic", "B4_Opportunistic"),
         ("Townsend Majors", "(True Market)"),
         ("Townsend Expanded Market", "(All Stocks)"),
         ("Townsend Minors", "(Small Cap / Mid Cap)"),
@@ -668,46 +659,46 @@ def render_smart_benchmarks():
         ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
     ]
 
-    if st.session_state.benchmark_view is None:
-        for name, desc in benchmark_labels:
-            label = f"**{name}**"
-            if desc:
-                label += f"  \n<span style='font-size: small'>{desc}</span>"
+    # If a benchmark has been selected, show its content
+    if "selected_benchmark" in st.session_state:
+        bm = st.session_state.selected_benchmark
+        excel_file = f"{bm}.xlsx"
+        image_file = f"{bm}.png"
 
-            if name in benchmark_files:
-                if st.button(label, use_container_width=True, key=name):
-                    st.session_state.benchmark_view = name
-                    st.experimental_rerun()
-            else:
-                st.markdown(label, unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
-
-    else:
-        name = st.session_state.benchmark_view
-        xlsx_file, img_file = benchmark_files[name]
-
+        # Load and display the image
         try:
-            # Show the benchmark image
-            st.image(img_file, use_column_width=True)
-
-            # Load and format Excel data
-            df = pd.read_excel(xlsx_file)
-            percent_df = df.copy()
-            for col in percent_df.select_dtypes(include=[float, int]).columns:
-                percent_df[col] = percent_df[col].map(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
-
-            st.subheader(f"{name} Data")
-            st.dataframe(percent_df, use_container_width=True)
-
+            st.image(image_file, use_column_width=True)
         except Exception as e:
-            st.error(f"Error loading benchmark data: {e}")
+            st.error(f"Could not load image: {image_file}")
+
+        # Load and display the Excel data
+        try:
+            df = pd.read_excel(excel_file)
+            percent_cols = df.select_dtypes(include='number').columns
+            for col in percent_cols:
+                df[col] = df[col].apply(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
+            st.dataframe(df, use_container_width=True)
+        except Exception as e:
+            st.error(f"Could not load Excel file: {excel_file}")
 
         st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🔙 Return to Benchmarks"):
-            st.session_state.benchmark_view = None
+        if st.button("🔙 Back to Benchmarks", use_container_width=True):
+            del st.session_state.selected_benchmark
             st.experimental_rerun()
+        return
+
+    # Show benchmark buttons
+    for name, note in benchmark_data:
+        label = name if not note else f"{name} {note}"
+        if name.startswith("Townsend Core") or "Non Core" in name or "Value Add" in name or "Opportunistic" in name:
+            if st.button(label, use_container_width=True):
+                st.session_state.selected_benchmark = label.replace("Townsend ", "").replace(" ", "")
+                st.experimental_rerun()
+        else:
+            st.markdown(f"🟦 **{name}** <span style='font-size: small'>{note}</span>", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
 
 
 
