@@ -618,6 +618,23 @@ def render_fund_pipeline():
         except Exception as e:
             st.error(f"Failed to process file: {e}")
 
+def render_market_research():
+    st.title("Market Research")
+
+    st.subheader("Townsend Views")
+
+    # Embed Townsend Views page in a scrollable iframe
+    components.iframe(
+        src="https://www.townsendgroup.com/townsend-views/",
+        width=1000,  # You can adjust width
+        height=600,  # You can adjust height
+        scrolling=True
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Return to Home button
+    st.button("🔙 Return to Home", on_click=go_home, use_container_width=True, key="btn_return_market_research")
 
 
 def render_smart_benchmarks():
