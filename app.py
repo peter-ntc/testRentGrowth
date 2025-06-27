@@ -665,16 +665,23 @@ def render_smart_benchmarks():
         ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
     ]
 
-    if "benchmark_selected" not in st.session_state:
-        st.session_state.benchmark_selected = None
+    selected = None
 
-    if st.session_state.benchmark_selected:
-        selected = st.session_state.benchmark_selected
+    for label, subtext in all_benchmarks:
+        full_label = f"{label}  \n<span style='font-size: 0.8em; color: gray'>{subtext}</span>" if subtext else label
+        if label in benchmark_files:
+            if st.button(label, use_container_width=True, key=f"btn_{label}"):
+                st.session_state.selected_benchmark = label
+        else:
+            st.markdown(f"**{label}**  <span style='font-size: 0.8em; color: gray'>{subtext}</span>", unsafe_allow_html=True)
+            st.markdown("---")
+
+    if "selected_benchmark" in st.session_state:
+        selected = st.session_state.selected_benchmark
         file_path = f"./{benchmark_files[selected]}"
         try:
             df = pd.read_excel(file_path)
 
-            # Format percentages
             def format_percentage_cols(df):
                 formatted_df = df.copy()
                 for col in formatted_df.columns:
@@ -685,28 +692,10 @@ def render_smart_benchmarks():
             df = format_percentage_cols(df)
 
             st.subheader(f"{selected} Benchmark Data")
-            for col in df.select_dtypes(include='number').columns:
-                df[col] = df[col].apply(lambda x: f"{x:.2%}" if pd.notnull(x) else "")
             st.dataframe(df, height=600, use_container_width=True)
+
         except Exception as e:
             st.error(f"Could not load {file_path}: {e}")
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🔙 Return to Benchmark List", use_container_width=True):
-            st.session_state.benchmark_selected = None
-            st.rerun()
-        return
-
-    # Render benchmark list page
-    for label, subtext in all_benchmarks:
-        full_label = f"{label}  \n<span style='font-size: 0.8em; color: gray'>{subtext}</span>" if subtext else label
-        if label in benchmark_files:
-            if st.button(label, use_container_width=True, key=f"btn_{label}"):
-                st.session_state.benchmark_selected = label
-                st.rerun()
-        else:
-            st.markdown(f"**{label}**  <span style='font-size: 0.8em; color: gray'>{subtext}</span>", unsafe_allow_html=True)
-            st.markdown("---")
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
