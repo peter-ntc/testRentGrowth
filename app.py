@@ -643,48 +643,35 @@ def render_smart_benchmarks():
     st.title("Smart Benchmarks")
 
     benchmarks = [
-        ("Townsend Core", "B1_Core.xlsx"),
-        ("Townsend Non Core", "B2_NonCore.xlsx"),
-        ("Townsend Value Add", "B3_ValueAdd.xlsx"),
-        ("Townsend Opportunistic", "B4_Opportunistic.xlsx"),
-        ("Townsend Majors", "(True Market)"),
-        ("Townsend Expanded Market", "(All Stocks)"),
-        ("Townsend Minors", "(Small Cap / Mid Cap)"),
-        ("Townsend Sector Specific", "(Property Sector Focused Indices)"),
-        ("Townsend Global Property Index", ""),
-        ("Townsend EMEA Property Index", ""),
-        ("Townsend APAC Property Index", ""),
-        ("Townsend Global Infrastructure Index", "(New Index)"),
-        ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
-    ]
+    ("Townsend Core", ""),
+    ("Townsend Non Core", ""),
+    ("Townsend Value Add", ""),
+    ("Townsend Opportunistic", ""),
+    ("Townsend Majors", "(True Market)"),
+    ("Townsend Expanded Market", "(All Stocks)"),
+    ("Townsend Minors", "(Small Cap / Mid Cap)"),
+    ("Townsend Sector Specific", "(Property Sector Focused Indices)"),
+    ("Townsend Global Property Index", ""),
+    ("Townsend EMEA Property Index", ""),
+    ("Townsend APAC Property Index", ""),
+    ("Townsend Global Infrastructure Index", "(New Index)"),
+    ("Townsend Global Real Assets Index", "(Combine Global Infra and True Market)")
+]
 
-    for label, detail in benchmarks:
-        if "xlsx" in detail:
-            if st.button(label, use_container_width=True, key=f"btn_{label}"):
-                st.session_state.selected_benchmark = detail
-                st.experimental_rerun()
-        else:
-            st.markdown(f"#### {label} <span style='font-size: 0.8em;'>{detail}</span>", unsafe_allow_html=True)
 
-    # Display the selected benchmark Excel file after rerun
-    selected = st.session_state.get("selected_benchmark")
-    if selected:
-        try:
-            df = pd.read_excel(selected)
-            # Format percentages if numeric
-            for col in df.columns:
-                if df[col].dtype in ["float64", "int64"]:
-                    df[col] = df[col].apply(lambda x: f"{x:.2%}" if abs(x) < 10 else x)
-            st.markdown("### Benchmark Data")
-            st.dataframe(df, use_container_width=True, height=600)
-        except Exception as e:
-            st.error(f"Could not load file '{selected}': {e}")
+    for label, note in benchmarks:
+        st.markdown(
+            f"""
+            <div style="border: 1px solid #ccc; border-radius: 10px; padding: 10px; margin-bottom: 10px;">
+                <strong>{label}</strong><br>
+                <span style="font-size: 0.85em; color: #666;">{note}</span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("🔙 Return to Home", use_container_width=True):
-            st.session_state.page = "home"
-            st.session_state.selected_benchmark = None
-            st.experimental_rerun()
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.button("🔙 Return to Home", on_click=go_home, use_container_width=True)
 
 
 
